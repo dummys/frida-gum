@@ -173,7 +173,7 @@ typedef enum {
   GUM_CPU_AMD64,
   GUM_CPU_ARM,
   GUM_CPU_ARM64,
-  GUM_CPU_MIPS
+  GUM_CPU_MIPS,
   GUM_CPU_PPC
 } GumCpuType;
 
