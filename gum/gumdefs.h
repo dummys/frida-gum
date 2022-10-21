@@ -435,8 +435,7 @@ struct _GumPPCCpuContext
   guint64 fpr29;
   guint64 fpr30;
   guint64 fpr31;
-
-}
+};
 
 
 enum _GumRelocationScenario
