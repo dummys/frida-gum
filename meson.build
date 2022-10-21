@@ -21,6 +21,9 @@ if host_machine.cpu_family() == 'arm'
 elif host_machine.cpu_family() == 'aarch64'
   host_arch = 'arm64'
   host_abi = 'arm64'
+elif host_machine.cpu_family() == 'ppc'
+  host_arch = 'ppc'
+  host_abi = 'ppc'
 elif host_machine.cpu_family() == 'mips'
   host_arch = 'mips'
   if host_machine.endian() == 'little'
@@ -186,6 +189,7 @@ cpu_defines = [
   ['arm64', 'HAVE_ARM64'],
   ['mips', 'HAVE_MIPS'],
   ['mips64', 'HAVE_MIPS'],
+  ['ppc', 'HAVE_PPC'],
 ]
 foreach d : cpu_defines
   if d.get(0) == host_arch
@@ -354,6 +358,7 @@ endif
 capstone_arch_mappings = {
   'x86_64': 'x86',
   's390x': 'sysz',
+  'ppc': 'powerpc',
 }
 capstone_options = [
   'profile=' + (diet ? 'tiny' : 'full'),
@@ -598,6 +603,7 @@ gum_incdirs = [
   include_directories('gum/arch-arm'),
   include_directories('gum/arch-arm64'),
   include_directories('gum/arch-mips'),
+  include_directories('gum/arch-ppc'),
   include_directories('libs'),
   include_directories('libs/gum/heap'),
   include_directories('libs/gum/prof'),
