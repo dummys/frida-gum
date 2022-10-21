@@ -107,6 +107,8 @@ typedef GumArm64CpuContext GumCpuContext;
 typedef GumMipsCpuContext GumCpuContext;
 #elif defined (__ppc32__)
 # define GUM_NATIVE_CPU GUM_CPU_PPC
+# define GUM_DEFAULT_CS_ARCH CS_ARCH_PPC
+# if GLIB_SIZEOF_VOID_P == 4
 /**
  * GUM_DEFAULT_CS_MODE: (skip)
  */
