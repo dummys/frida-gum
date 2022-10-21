@@ -91,7 +91,6 @@ typedef GumArm64CpuContext GumCpuContext;
 #elif defined (__mips__)
 # define GUM_NATIVE_CPU GUM_CPU_MIPS
 # define GUM_DEFAULT_CS_ARCH CS_ARCH_MIPS
-# define GUM_DEFAUy
 # if GLIB_SIZEOF_VOID_P == 4
 /**
  * GUM_DEFAULT_CS_MODE: (skip)
