@@ -51,6 +51,7 @@ typedef union _GumArmVectorReg GumArmVectorReg;
 typedef struct _GumArm64CpuContext GumArm64CpuContext;
 typedef union _GumArm64VectorReg GumArm64VectorReg;
 typedef struct _GumMipsCpuContext GumMipsCpuContext;
+typedef struct _GumPPCCpuContext GumPPCCpuContext;
 typedef guint GumRelocationScenario;
 
 #if defined (_M_IX86) || defined (__i386__)
@@ -89,7 +90,7 @@ typedef GumArmCpuContext GumCpuContext;
 typedef GumArm64CpuContext GumCpuContext;
 #elif defined (__mips__)
 # define GUM_NATIVE_CPU GUM_CPU_MIPS
-# define GUM_DEFAULT_CS_ARCH CS_ARCH_MIPS
+# define GUM_DEFAUy
 # if GLIB_SIZEOF_VOID_P == 4
 /**
  * GUM_DEFAULT_CS_MODE: (skip)
@@ -104,6 +105,21 @@ typedef GumArm64CpuContext GumCpuContext;
     (CS_MODE_MIPS64 | GUM_DEFAULT_CS_ENDIAN))
 # endif
 typedef GumMipsCpuContext GumCpuContext;
+#elif defined (__ppc32__)
+# define GUM_NATIVE_CPU GUM_CPU_PPC
+/**
+ * GUM_DEFAULT_CS_MODE: (skip)
+ */
+#  define GUM_DEFAULT_CS_MODE ((cs_mode) \
+    (CS_MODE_32 | GUM_DEFAULT_CS_ENDIAN))
+# else
+/**
+ * GUM_DEFAULT_CS_MODE: (skip)
+ */
+#  define GUM_DEFAULT_CS_MODE ((cs_mode) \
+    (CS_MODE_64 | GUM_DEFAULT_CS_ENDIAN))
+# endif
+typedef GumPPCCpuContext GumCpuContext;
 #else
 # error Unsupported architecture.
 #endif
@@ -158,6 +174,7 @@ typedef enum {
   GUM_CPU_ARM,
   GUM_CPU_ARM64,
   GUM_CPU_MIPS
+  GUM_CPU_PPC
 } GumCpuType;
 
 enum _GumCpuFeatures
@@ -340,6 +357,87 @@ struct _GumMipsCpuContext
   gsize k0;
   gsize k1;
 };
+
+struct _GumPPCCpuContext
+{
+  /*
+   * The PPC architecture has 32 General purpose registers with size 32bit and 32 Floating-Point registers with size 64bit.
+   */
+
+  guint32 lr;
+  guint32 ctr;
+  guint32 cr[7];
+  guint32 xer;
+  guint32 vrsave;
+
+  guint32 r0;
+  guint32 r1; // used as SP
+  guint32 r2;
+  guint32 r3;
+  guint32 r4;
+  guint32 r5;
+  guint32 r6;
+  guint32 r7;
+  guint32 r8;
+  guint32 r9;
+  guint32 r10;
+  guint32 r11;
+  guint32 r12;
+  guint32 r13;
+  guint32 r14;
+  guint32 r15;
+  guint32 r16;
+  guint32 r17;
+  guint32 r18;
+  guint32 r19;
+  guint32 r20;
+  guint32 r21;
+  guint32 r22;
+  guint32 r23;
+  guint32 r24;
+  guint32 r25;
+  guint32 r26;
+  guint32 r27;
+  guint32 r28;
+  guint32 r29;
+  guint32 r30;
+  guint32 r31;
+  
+  guint64 fpr0;
+  guint64 fpr1;
+  guint64 fpr2;
+  guint64 fpr3;
+  guint64 fpr4;
+  guint64 fpr5;
+  guint64 fpr6;
+  guint64 fpr7;
+  guint64 fpr8;
+  guint64 fpr9;
+  guint64 fpr10;
+  guint64 fpr11;
+  guint64 fpr12;
+  guint64 fpr13;
+  guint64 fpr14;
+  guint64 fpr15;
+  guint64 fpr16;
+  guint64 fpr17;
+  guint64 fpr18;
+  guint64 fpr19;
+  guint64 fpr20;
+  guint64 fpr21;
+  guint64 fpr22;
+  guint64 fpr23;
+  guint64 fpr24;
+  guint64 fpr25;
+  guint64 fpr26;
+  guint64 fpr27;
+  guint64 fpr28;
+  guint64 fpr29;
+  guint64 fpr30;
+  guint64 fpr31;
+
+}
+
 
 enum _GumRelocationScenario
 {
