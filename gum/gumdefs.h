@@ -105,22 +105,14 @@ typedef GumArm64CpuContext GumCpuContext;
     (CS_MODE_MIPS64 | GUM_DEFAULT_CS_ENDIAN))
 # endif
 typedef GumMipsCpuContext GumCpuContext;
-#elif defined (__ppc32__)
+#elif defined (__PPC__) && GLIB_SIZEOF_VOID_P == 4
 # define GUM_NATIVE_CPU GUM_CPU_PPC
 # define GUM_DEFAULT_CS_ARCH CS_ARCH_PPC
-# if GLIB_SIZEOF_VOID_P == 4
 /**
  * GUM_DEFAULT_CS_MODE: (skip)
  */
 #  define GUM_DEFAULT_CS_MODE ((cs_mode) \
     (CS_MODE_32 | GUM_DEFAULT_CS_ENDIAN))
-# else
-/**
- * GUM_DEFAULT_CS_MODE: (skip)
- */
-#  define GUM_DEFAULT_CS_MODE ((cs_mode) \
-    (CS_MODE_64 | GUM_DEFAULT_CS_ENDIAN))
-# endif
 typedef GumPPCCpuContext GumCpuContext;
 #else
 # error Unsupported architecture.
@@ -366,11 +358,13 @@ struct _GumPPCCpuContext
    * The PPC architecture has 32 General purpose registers with size 32bit and 32 Floating-Point registers with size 64bit.
    */
 
+  guint32 pc;
+  guint32 msr
   guint32 lr;
   guint32 ctr;
   guint32 cr[7];
   guint32 xer;
-  guint32 vrsave;
+  guint32 vrsave; // dunno
 
   guint32 r0;
   guint32 r1; // used as SP
