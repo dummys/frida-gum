@@ -359,7 +359,7 @@ struct _GumPPCCpuContext
    */
 
   guint32 pc;
-  guint32 msr
+  guint32 msr;
   guint32 lr;
   guint32 ctr;
   guint32 cr[7];
@@ -368,7 +368,7 @@ struct _GumPPCCpuContext
 
   guint32 r0;
   guint32 r1; // used as SP
-  guint32 r2;
+  guint32 r2; // TOC
   guint32 r3;
   guint32 r4;
   guint32 r5;
