@@ -473,18 +473,18 @@ gum_exceptor_handle_scope_exception (GumExceptionDetails * details,
       GUM_FUNCPTR_TO_POINTER (gum_exceptor_scope_perform_longjmp));
 
   /* SP: Align to 16 byte boundary */
-  context->r1 &= ~(gsize) (16 - 1);
+  context->r[1] &= ~(gsize) (16 - 1);
   /* Avoid the red zone (when applicable) */
-  context->r1 -= GUM_RED_ZONE_SIZE;
+  context->r[1] -= GUM_RED_ZONE_SIZE;
 
-  context->r3 = GPOINTER_TO_SIZE (scope);
+  context->r[3] = GPOINTER_TO_SIZE (scope);
 
 # if GLIB_SIZEOF_VOID_P == 4
   /* 32-bit: First argument goes in a register */
-  context->r3 = GPOINTER_TO_SIZE (scope);
+  context->r[3] = GPOINTER_TO_SIZE (scope);
 # else
   /* 64-bit: TODO */
-  context->r3 = GPOINTER_TO_SIZE (scope);
+  context->r[3] = GPOINTER_TO_SIZE (scope);
 # endif
 
   /* Dummy return address (we won't return) */
