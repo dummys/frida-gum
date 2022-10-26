@@ -94,7 +94,7 @@ gum_unw_backtracer_generate (GumBacktracer * backtracer,
     return_addresses->items[0] = GSIZE_TO_POINTER (cpu_context->ra);
 
 #elif defined (HAVE_PPC)
-    return_addresses->items[0] = GSIZE_TO_POINTER (cpu_context->r[3]);
+    return_addresses->items[0] = GSIZE_TO_POINTER (cpu_context->lr);
 #else
 # error Unsupported architecture
 #endif
