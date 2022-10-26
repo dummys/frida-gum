@@ -60,6 +60,8 @@
 # define GumRegs struct user_pt_regs
 #elif defined (HAVE_MIPS)
 # define GumRegs struct pt_regs
+#elif defined (HAVE_PPC)
+# define GumRegs struct pt_regs
 #else
 # error Unsupported architecture
 #endif
