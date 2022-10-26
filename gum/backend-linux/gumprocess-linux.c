@@ -2246,6 +2246,44 @@ gum_parse_regs (const GumRegs * regs,
   ctx->lo = regs->lo;
 
   ctx->pc = regs->cp0_epc;
+
+#elif defined (HAVE_PPC) && GLIB_SIZEOF_VOID_P == 4
+ctx->r[0] = regs->gpr[0];
+ctx->r[1] = regs->gpr[1];
+ctx->r[2] = regs->gpr[2];
+ctx->r[3] = regs->gpr[3];
+ctx->r[4] = regs->gpr[4];
+ctx->r[5] = regs->gpr[5];
+ctx->r[6] = regs->gpr[6];
+ctx->r[7] = regs->gpr[7];
+ctx->r[8] = regs->gpr[8];
+ctx->r[9] = regs->gpr[9];
+ctx->r[10] = regs->gpr[10];
+ctx->r[11] = regs->gpr[11];
+ctx->r[12] = regs->gpr[12];
+ctx->r[13] = regs->gpr[13];
+ctx->r[14] = regs->gpr[14];
+ctx->r[15] = regs->gpr[15];
+ctx->r[16] = regs->gpr[16];
+ctx->r[17] = regs->gpr[17];
+ctx->r[18] = regs->gpr[18];
+ctx->r[19] = regs->gpr[19];
+ctx->r[20] = regs->gpr[20];
+ctx->r[21] = regs->gpr[21];
+ctx->r[22] = regs->gpr[22];
+ctx->r[23] = regs->gpr[23];
+ctx->r[24] = regs->gpr[24];
+ctx->r[25] = regs->gpr[25];
+ctx->r[26] = regs->gpr[26];
+ctx->r[27] = regs->gpr[27];
+ctx->r[28] = regs->gpr[28];
+ctx->r[29] = regs->gpr[29];
+ctx->r[30] = regs->gpr[30];
+ctx->r[31] = regs->gpr[31];
+ctx->msr = regs->msr;
+ctx->ctr = regs->ctr;
+ctx->lr = regs->link;
+ctx->xer = regs->xer;
 #else
 # error Unsupported architecture
 #endif
