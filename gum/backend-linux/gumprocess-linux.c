@@ -1538,6 +1538,10 @@ gum_linux_cpu_type_from_auxv (gconstpointer auxv,
 #elif defined (HAVE_MIPS)
   cpu32 = GUM_CPU_MIPS;
   cpu64 = GUM_CPU_MIPS;
+#elif defined (HAVE_PPC)
+  cpu32 = GUM_CPU_PPC;
+  cpu64 = GUM_CPU_PPC;
+
 #else
 # error Unsupported architecture
 #endif
@@ -1939,6 +1943,10 @@ gum_linux_parse_ucontext (const ucontext_t * uc,
   ctx->lo = (guint32) uc->uc_mcontext.mdlo;
 
   ctx->pc = (guint32) uc->uc_mcontext.pc;
+#elif defined (HAVE_PPC) && GLIB_SIZEOF_VOID_P == 4
+
+
+
 #else
 # error FIXME
 #endif
@@ -2084,6 +2092,46 @@ gum_linux_unparse_ucontext (const GumCpuContext * ctx,
   uc->uc_mcontext.mdlo = (guint64) ctx->lo;
 
   uc->uc_mcontext.pc = (guint64) ctx->pc;
+#elif defined (HAVE_PPC) && GLIB_SIZEOF_VOID_P == 4
+  m_context_t * gr = uc->uc_mcontext.gregs;
+  gr[0] = ctx->r[0];
+  gr[1] = ctx->r[1];
+  gr[2] = ctx->r[2];
+  gr[3] = ctx->r[3];
+  gr[4] = ctx->r[4];
+  gr[5] = ctx->r[5];
+  gr[6] = ctx->r[6];
+  gr[7] = ctx->r[7];
+  gr[8] = ctx->r[8];
+  gr[9] = ctx->r[9];
+  gr[10] = ctx->r[10];
+  gr[11] = ctx->r[11];
+  gr[12] = ctx->r[12];
+  gr[13] = ctx->r[13];
+  gr[14] = ctx->r[14];
+  gr[15] = ctx->r[15];
+  gr[16] = ctx->r[16];
+  gr[17] = ctx->r[17];
+  gr[18] = ctx->r[18];
+  gr[19] = ctx->r[19];
+  gr[20] = ctx->r[20];
+  gr[21] = ctx->r[21];
+  gr[22] = ctx->r[22];
+  gr[23] = ctx->r[23];
+  gr[24] = ctx->r[24];
+  gr[25] = ctx->r[25];
+  gr[26] = ctx->r[26];
+  gr[27] = ctx->r[27];
+  gr[28] = ctx->r[28];
+  gr[29] = ctx->r[29];
+  gr[30] = ctx->r[30];
+  gr[31] = ctx->r[31];
+  gr[32] = ctx->nip;
+  gr[33] = ctx->msr;
+  gr[35] = ctx->ctr;
+  gr[36] = ctx->lr;
+  gr[37] = ctx->xer;
+  gr[38] = ctx->ccr;
 #else
 # error FIXME
 #endif
