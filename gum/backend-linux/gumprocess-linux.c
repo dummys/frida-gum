@@ -2093,7 +2093,7 @@ gum_linux_unparse_ucontext (const GumCpuContext * ctx,
 
   uc->uc_mcontext.pc = (guint64) ctx->pc;
 #elif defined (HAVE_PPC) && GLIB_SIZEOF_VOID_P == 4
-  m_context_t * gr = uc->uc_mcontext.gregs;
+  unsigned long * gr = uc->uc_mcontext.gregs;
   gr[0] = ctx->r[0];
   gr[1] = ctx->r[1];
   gr[2] = ctx->r[2];
