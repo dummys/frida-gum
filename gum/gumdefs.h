@@ -368,7 +368,7 @@ struct _GumPPCCpuContext
 
   guint32 r[32];
   
-  guint64 fpr[32];
+  guint64 f[32];
 };
 
 enum _GumRelocationScenario
