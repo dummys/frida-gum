@@ -365,6 +365,8 @@ TESTCASE (linux_get_cpu_from_auxv_null_32bit)
   cpu32 = GUM_CPU_ARM;
 #elif defined (HAVE_MIPS)
   cpu32 = GUM_CPU_MIPS;
+#elif defined (HAVE_PPC)
+  cpu32 = GUM_CPU_PPC;
 #else
 # error Unsupported architecture
 #endif
