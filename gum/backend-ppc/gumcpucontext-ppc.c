@@ -97,7 +97,7 @@ gum_cpu_context_replace_nth_argument (GumCpuContext * self,
 gpointer
 gum_cpu_context_get_return_value (GumCpuContext * self)
 {
-  return (gpointer) self->r3;
+  return GSIZE_TO_POINTER (self->r3);
 }
 
 void
