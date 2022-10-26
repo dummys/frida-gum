@@ -22,6 +22,7 @@ def generate_and_write_bindings(source_dir, output_dir):
         ("arm", "thumb"),
         ("arm64", "arm64"),
         ("mips", "mips"),
+        ("ppc", "ppc"),
     ]
 
     tsds = {}
@@ -80,6 +81,7 @@ def generate_umbrella(runtime, name, section, flavor_combos):
         "arm": "HAVE_ARM",
         "arm64": "HAVE_ARM64",
         "mips": "HAVE_MIPS",
+        "ppc": "HAVE_PPC",
     }
 
     current_arch = None
@@ -2225,6 +2227,7 @@ arch_names = {
     "arm": "ARM",
     "arm64": "AArch64",
     "mips": "MIPS",
+    "ppc": "PPC",
 }
 
 writer_enums = {
@@ -2324,7 +2327,21 @@ writer_enums = {
             "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
             "30", "31",
         ]),
+
     ],
+    "ppc": [
+        ("ppc_register, ppc_reg", "PPC_REG_", [
+            "r0", "r1", "r2", "r3", "r4", "r5",
+            "r6", "r7", "r8", "r9", "r10", "r11",
+            "r12", "r13", "r14", "r15", "r16", "r17",
+            "r13", "r14", "r15", "r16", "r17", "r18",
+            "r19", "r20", "r21", "r22", "r23", "r24",
+            "r25", "r26", "r27", "r28", "r29", "r30",
+            "r31", "ctr", "lr", "fp", "cr0", "cr1",
+            "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",
+        
+        ]),
+    ]
 }
 
 def generate_conversion_methods(component, generate_parser):
