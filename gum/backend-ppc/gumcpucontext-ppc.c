@@ -18,21 +18,21 @@ gum_cpu_context_get_nth_argument (GumCpuContext * self,
     switch (n)
     {
       case 0:
-        return (gpointer) self->r3;
+        return (gpointer) self->r[3];
       case 1:
-        return (gpointer) self->r4;
+        return (gpointer) self->r[4];
       case 2:
-        return (gpointer) self->r5;
+        return (gpointer) self->r[5];
       case 3:
-        return (gpointer) self->r6;
+        return (gpointer) self->r[6];
       case 4:
-        return (gpointer) self->r7;
+        return (gpointer) self->r[7];
       case 5:
-        return (gpointer) self->r8;
+        return (gpointer) self->r[8];
       case 6:
-        return (gpointer) self->r9;
+        return (gpointer) self->r[9];
       case 7:
-        return (gpointer) self->r10;
+        return (gpointer) self->r[10];
     }
   }
   else
@@ -55,28 +55,28 @@ gum_cpu_context_replace_nth_argument (GumCpuContext * self,
     switch (n)
     {
       case 0:
-        self->r3 = (guint32) value;
+        self->r[3] = (guint32) value;
         break;
       case 1:
-        self->r4 = (guint32) value;
+        self->r[4] = (guint32) value;
         break;
       case 2:
-        self->r5 = (guint32) value;
+        self->r[5] = (guint32) value;
         break;
       case 3:
-        self->r6 = (guint32) value;
+        self->r[6] = (guint32) value;
         break;
       case 4:
-        self->r7 = (guint32) value;
+        self->r[7] = (guint32) value;
         break;
       case 5:
-        self->r8 = (guint32) value;
+        self->r[8] = (guint32) value;
         break;
       case 6:
-        self->r9 = (guint32) value;
+        self->r[9] = (guint32) value;
         break;
       case 7:
-        self->r10 = (guint32) value;
+        self->r[10] = (guint32) value;
         break;
     }
   }
@@ -97,12 +97,12 @@ gum_cpu_context_replace_nth_argument (GumCpuContext * self,
 gpointer
 gum_cpu_context_get_return_value (GumCpuContext * self)
 {
-  return GSIZE_TO_POINTER (self->r3);
+  return GSIZE_TO_POINTER (self->r[3]);
 }
 
 void
 gum_cpu_context_replace_return_value (GumCpuContext * self,
                                       gpointer value)
 {
-  self->r3 = GPOINTER_TO_SIZE (value);
+  self->r[3] = GPOINTER_TO_SIZE (value);
 }
