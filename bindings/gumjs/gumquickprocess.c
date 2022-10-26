@@ -24,6 +24,8 @@
 # define GUM_SCRIPT_ARCH "arm64"
 #elif defined (HAVE_MIPS)
 # define GUM_SCRIPT_ARCH "mips"
+#elif defined (HAVE_PPC)
+# define GUM_SCRIPT_ARCH "ppc"
 #endif
 
 #if defined (HAVE_LINUX)
