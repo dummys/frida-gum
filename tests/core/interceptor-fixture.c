@@ -85,6 +85,9 @@
 #    define GUM_TEST_SHLIB_ARCH "mips"
 #  endif
 # endif
+#elif defined (HAVE_PPC) && GLIB_SIZEOF_VOID_P == 4
+#  define GUM_TEST_SHLIB_ARCH "ppc"
+
 #else
 # error Unknown CPU
 #endif
