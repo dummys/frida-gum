@@ -92,6 +92,9 @@ gum_unw_backtracer_generate (GumBacktracer * backtracer,
     return_addresses->items[0] = GSIZE_TO_POINTER (cpu_context->lr);
 #elif defined (HAVE_MIPS)
     return_addresses->items[0] = GSIZE_TO_POINTER (cpu_context->ra);
+
+#elif defined (HAVE_PPC)
+    return_addresses->items[0] = GSIZE_TO_POINTER (cpu_context->r[3]);
 #else
 # error Unsupported architecture
 #endif
@@ -143,7 +146,7 @@ gum_cpu_context_to_unw (const GumCpuContext * ctx,
                         unw_context_t * uc)
 {
 #if defined (UNW_TARGET_X86) || defined (UNW_TARGET_X86_64) || \
-    defined (UNW_TARGET_AARCH64)
+    defined (UNW_TARGET_AARCH64) || defined (UNW_TARGET_PPC32)
 # pragma GCC diagnostic push
 # pragma GCC diagnostic ignored "-Wunused-value"
   unw_getcontext (uc);
@@ -216,6 +219,7 @@ gum_cpu_context_to_unw (const GumCpuContext * ctx,
   uc->uc_mcontext.mdlo = ctx->lo;
 
   uc->uc_mcontext.pc = ctx->pc;
+
 #else
 # error FIXME
 #endif
