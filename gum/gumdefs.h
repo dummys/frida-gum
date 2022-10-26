@@ -366,73 +366,10 @@ struct _GumPPCCpuContext
   guint32 xer;
   guint32 vrsave; // dunno
 
-  guint32 r0;
-  guint32 r1; // used as SP
-  guint32 r2; // TOC
-  guint32 r3;
-  guint32 r4;
-  guint32 r5;
-  guint32 r6;
-  guint32 r7;
-  guint32 r8;
-  guint32 r9;
-  guint32 r10;
-  guint32 r11;
-  guint32 r12;
-  guint32 r13;
-  guint32 r14;
-  guint32 r15;
-  guint32 r16;
-  guint32 r17;
-  guint32 r18;
-  guint32 r19;
-  guint32 r20;
-  guint32 r21;
-  guint32 r22;
-  guint32 r23;
-  guint32 r24;
-  guint32 r25;
-  guint32 r26;
-  guint32 r27;
-  guint32 r28;
-  guint32 r29;
-  guint32 r30;
-  guint32 r31;
+  guint32 r[32];
   
-  guint64 fpr0;
-  guint64 fpr1;
-  guint64 fpr2;
-  guint64 fpr3;
-  guint64 fpr4;
-  guint64 fpr5;
-  guint64 fpr6;
-  guint64 fpr7;
-  guint64 fpr8;
-  guint64 fpr9;
-  guint64 fpr10;
-  guint64 fpr11;
-  guint64 fpr12;
-  guint64 fpr13;
-  guint64 fpr14;
-  guint64 fpr15;
-  guint64 fpr16;
-  guint64 fpr17;
-  guint64 fpr18;
-  guint64 fpr19;
-  guint64 fpr20;
-  guint64 fpr21;
-  guint64 fpr22;
-  guint64 fpr23;
-  guint64 fpr24;
-  guint64 fpr25;
-  guint64 fpr26;
-  guint64 fpr27;
-  guint64 fpr28;
-  guint64 fpr29;
-  guint64 fpr30;
-  guint64 fpr31;
+  guint64 fpr[32];
 };
-
 
 enum _GumRelocationScenario
 {
