@@ -2126,12 +2126,10 @@ gum_linux_unparse_ucontext (const GumCpuContext * ctx,
   gr[29] = ctx->r[29];
   gr[30] = ctx->r[30];
   gr[31] = ctx->r[31];
-  gr[32] = ctx->nip;
   gr[33] = ctx->msr;
   gr[35] = ctx->ctr;
   gr[36] = ctx->lr;
   gr[37] = ctx->xer;
-  gr[38] = ctx->ccr;
 #else
 # error FIXME
 #endif
