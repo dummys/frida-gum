@@ -149,20 +149,59 @@ gum_ppc_relocator_read_one (GumPpcRelocator * self,
 
   switch (insn->id)
   {
-    // unconditional branch: eob + eoi
-    // conditional branch/branch with link: eob  
+    
+    /* unconditional branch: eob + eoi */
+    /* conditional branch/branch with link: eob */
 
     /* Here we are defining which instruction do an end of block */
     /* ret like instructions */
     case PPC_INS_BL:
+    case PPC_INS_BLA:
+    case PPC_INS_BLE:
+    case PPC_INS_BLEA:
+    case PPC_INS_BLECTR:
+    case PPC_INS_BLECTRL:
+    case PPC_INS_BLEL:
+    case PPC_INS_BLELA:
+    case PPC_INS_BLELR:
+    case PPC_INS_BLELRL:
     case PPC_INS_BLR:
-    case PPC_INS_BCL:
-    case PPC_INS_BCLR:
+    case PPC_INS_BLRL:
+    case PPC_INS_BLT:
+    case PPC_INS_BLTA:
+    case PPC_INS_BLTCTR:
+    case PPC_INS_BLTCTRL:
+    case PPC_INS_BLTL:
+    case PPC_INS_BLTLA:
+    case PPC_INS_BLTLR:
+    case PPC_INS_BLTLRL:
+    case PPC_INS_BCA:
+    case PPC_INS_BCCTR:
     case PPC_INS_BCCTRL:
+    case PPC_INS_BCDCFN:
+    case PPC_INS_BCDCFSQ:
+    case PPC_INS_BCDCFZ:
+    case PPC_INS_BCDCPSGN:
+    case PPC_INS_BCDCTN:
+    case PPC_INS_BCDCTSQ:
+    case PPC_INS_BCDCTZ:
+    case PPC_INS_BCDS:
+    case PPC_INS_BCDSETSGN:
+    case PPC_INS_BCDSR:
+    case PPC_INS_BCDTRUNC:
+    case PPC_INS_BCDUS:
+    case PPC_INS_BCDUTRUNC:
+    case PPC_INS_BCL:
+    case PPC_INS_BCLA:
+    case PPC_INS_BCLR:
+    case PPC_INS_BCLRL:
+    case PPC_INS_BCTR:
+    case PPC_INS_BCTRL:
       self->eob = TRUE;
       break;
      
     case PPC_INS_B:
+    case PPC_INS_BA:
       self->eob = TRUE;
       self->eoi = TRUE;
       break;
