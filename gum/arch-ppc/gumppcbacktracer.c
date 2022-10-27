@@ -156,36 +156,26 @@ gum_ppc_backtracer_generate (GumBacktracer * backtracer,
       }
       else
       {
-        // TODO: Add all branch and link instructions
+        /* Branch and link instructions */
         const guint32 insn = *((guint32 *) GSIZE_TO_POINTER (value - 8));
-        if ((insn & 0xfc000000) == 0x0c000000)
+        if ((insn & 0xfc000001) == 0x48000001)
         {
-          /* JAL <imm26> */
+          /* BL: Branch I-form*/
           valid = TRUE;
         }
-        else if ((insn & 0xfc00ffff) == 0x0000f809)
+        else if ((insn & 0xfc000001) == 0x40000001)
         {
-          /* JALR $ra, <reg> */
+          /* BCL: Branch Conditional B-form */
           valid = TRUE;
         }
-        else if ((insn & 0xfc1f0000) == 0x04110000)
+        else if ((insn & 0xfc0007ff) == 0x4c000021)
         {
-          /* BGEZAL $rs, <imm16> */
+          /* BCLRL: Branch Conditional to Link Register XL-form */
           valid = TRUE;
         }
-        else if ((insn & 0xfc1f0000) == 0x04130000)
+        else if ((insn & 0xfc0007ff) == 0x4c000421)
         {
-          /* BGEZALL $rs, <imm16> */
-          valid = TRUE;
-        }
-        else if ((insn & 0xfc1f0000) == 0x04100000)
-        {
-          /* BLTZAL $rs, <imm16> */
-          valid = TRUE;
-        }
-        else if ((insn & 0xfc1f0000) == 0x04120000)
-        {
-          /* BLTZALL $rs, <imm16> */
+          /* BCCTRL: Branch Condition to Count Register XL-form */
           valid = TRUE;
         }
       }
