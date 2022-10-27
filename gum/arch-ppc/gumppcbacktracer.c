@@ -156,7 +156,7 @@ gum_ppc_backtracer_generate (GumBacktracer * backtracer,
       }
       else
       {
-        /* Branch and link instructions */
+        /* PPC Branch and link instructions */
         const guint32 insn = *((guint32 *) GSIZE_TO_POINTER (value - 8));
         if ((insn & 0xfc000001) == 0x48000001)
         {
