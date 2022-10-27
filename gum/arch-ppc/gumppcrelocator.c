@@ -22,8 +22,15 @@ struct _GumCodeGenCtx
   cs_insn * insn;
   GumAddress pc;
 
-  GumPPCWriter * code_writer;
+  GumPpcWriter * code_writer;
 };
+
+static gboolean gum_ppc_relocator_write_one_instruction (
+    GumPpcRelocator * self);
+static void gum_ppc_relocator_put_label_for (GumPpcRelocator * self,
+    cs_insn * insn);
+static gboolean gum_x86_relocator_rewrite_unconditional_branch (
+    GumX86Relocator * self, GumCodeGenCtx * ctx);
 
 void
 gum_ppc_relocator_init (GumPpcRelocator * relocator,
@@ -42,6 +49,17 @@ gum_ppc_relocator_init (GumPpcRelocator * relocator,
   gum_ppc_relocator_reset (relocator, input_code, output);
 }
 
+gboolean
+gum_ppc_relocator_eob (GumPpcRelocator * self)
+{
+  return self->eob;
+}
+
+gboolean
+gum_ppc_relocator_eoi (GumPpcRelocator * self)
+{
+  return self->eoi;
+}
 gboolean
 gum_ppc_relocator_can_relocate (gpointer address,
                                 guint min_bytes,
@@ -108,6 +126,13 @@ gum_ppc_relocator_inpos (GumPpcRelocator * self)
 {
   return self->inpos % GUM_MAX_INPUT_INSN_COUNT;
 }
+
+static guint
+gum_ppc_relocator_outpos (GumPpcRelocator * self)
+{
+  return self->outpos % GUM_MAX_INPUT_INSN_COUNT;
+}
+
 static void
 gum_ppc_relocator_increment_inpos (GumPpcRelocator * self)
 {
@@ -216,4 +241,62 @@ gum_ppc_relocator_read_one (GumPpcRelocator * self,
   self->input_pc = address;
 
   return self->input_cur - self->input_start;
+}
+
+cs_insn *
+gum_ppc_relocator_peek_next_write_insn (GumPpcRelocator * self)
+{
+  if (self->outpos == self->inpos)
+    return NULL;
+
+  return self->input_insns[gum_ppc_relocator_outpos (self)];
+}
+
+gboolean
+gum_ppc_relocator_write_one (GumPpcRelocator * self)
+{
+  cs_insn * cur;
+
+  if ((cur = gum_ppc_relocator_peek_next_write_insn (self)) == NULL)
+    return FALSE;
+
+  gum_ppc_relocator_put_label_for (self, cur);
+
+  return gum_ppc_relocator_write_one_instruction (self);
+}
+
+static gboolean
+gum_ppc_relocator_write_one_instruction (GumPpcRelocator * self)
+{
+  cs_insn * insn;
+  GumCodeGenCtx ctx;
+  gboolean rewritten = FALSE;
+
+  if ((insn = gum_ppc_relocator_peek_next_write_insn (self)) == NULL)
+    return FALSE;
+  gum_ppc_relocator_increment_outpos (self);
+
+  ctx.insn = insn;
+  ctx.pc = insn->address + insn->size;
+  ctx.code_writer = self->output;
+
+  switch (insn->id)
+  {
+    case PPC_INS_B:
+    case PPC_INS_BA:
+      rewritten = gum_ppc_relocator_rewrite_unconditional_branch (self, &ctx);
+      break;
+
+
+  }
+
+void
+gum_ppc_relocator_write_all (GumPpcRelocator * self)
+{
+  guint count = 0;
+
+  while (gum_ppc_relocator_write_one (self))
+    count++;
+
+  g_assert (count > 0);
 }
