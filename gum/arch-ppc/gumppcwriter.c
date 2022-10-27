@@ -131,7 +131,7 @@ gum_ppc_writer_put_ori_reg_reg_imm (GumPpcWriter * self,
 }
 
 
-/* MTCTR: move reg to CTR (mnemonic, uses mtspr 9,Rx)*/
+/* MTCTR: move reg to CTR (mnemonic, uses mtspr 9, Rx)*/
 void
 gum_ppc_writer_put_mtctr_reg (GumPpcWriter * self,
                               ppc_reg src_reg)

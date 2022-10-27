@@ -284,7 +284,7 @@ _gum_interceptor_backend_activate_trampoline (GumInterceptorBackend * self,
     switch (data->redirect_code_size)
     {
       case 8:
-        /* TODO: support near relative jump B? */
+        /* TODO: support near relative jump B ? */
         g_assert_not_reached ();
         break;
       case GUM_HOOK_SIZE:
