@@ -3041,7 +3041,7 @@ class MethodArgument(object):
         name_raw = None
         converter = None
 
-        if type in ("GumX86Reg", "arm_reg", "arm64_reg", "mips_reg"):
+        if type in ("GumX86Reg", "arm_reg", "arm64_reg", "mips_reg", "ppc_reg"):
             self.type_raw = "const gchar *"
             self.type_format = "s"
             self.type_ts = to_camel_case("x86_register" if type == "GumX86Reg" else type.replace("_reg", "_register"), start_high=True)
