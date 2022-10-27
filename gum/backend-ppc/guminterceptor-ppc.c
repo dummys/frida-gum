@@ -22,7 +22,7 @@
  * stores the CPU context and transitions to C code passing the necessary
  * landmarks.
  *
- * On PPC, whilst FPR register can be 64 bits wide, the instruction stream
+ * On MIPS64, whilst FPR register can be 64 bits wide, the instruction stream
  * is only 32 bits. With fixed width 32-bit instructions, it is only possible
  * to load 16 bit immediate values at a time. Hence loading a 64-bit immediate
  * value takes rather more instructions.
@@ -118,7 +118,7 @@ gum_interceptor_backend_prepare_trampoline (GumInterceptorBackend * self,
   guint redirect_limit;
 
   *need_deflector = FALSE;
-
+  /* TODO: check hook size */
   if (gum_ppc_relocator_can_relocate (function_address, GUM_HOOK_SIZE,
       GUM_SCENARIO_ONLINE, &redirect_limit, &data->scratch_reg))
   {
@@ -153,7 +153,7 @@ gum_interceptor_backend_prepare_trampoline (GumInterceptorBackend * self,
     }
   }
 
-  if (data->scratch_reg == MIPS_REG_INVALID)
+  if (data->scratch_reg == PPC_REG_INVALID) /* from capstone/ppc.h */
     return FALSE;
 
   return TRUE;
@@ -183,17 +183,18 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
     g_assert_not_reached ();
   }
 
-  /* TODO: save $t0 on the stack? */
+  /* TODO: save some regs on the stack? */
 
-#if GLIB_SIZEOF_VOID_P == 4
+#if GLIB_SIZEOF_VOID_P == 8
   /*
-   * On PPC the calling convention is that r3- r10, thus  8 arguments are passed in
-   * registers, but it can also be passed thru the stack. Hence r11 is our first
+   * TODO: check on PPC64
+   * On PPC the calling convention is that r3- r10, thus 8 arguments are passed in
+   * registers, but it can also be passed on the stack. Hence r11 is our first
    * available register, otherwise we will start clobbering function parameters.
    */
   gum_ppc_writer_put_la_reg_address (cw, PPC_REG_R11, GUM_ADDRESS (ctx));
 #else
-  gum_ppc_writer_put_la_reg_address (cw, MIPS_REG_R3, GUM_ADDRESS (ctx));
+  gum_ppc_writer_put_la_reg_address (cw, PPC_REG_R11, GUM_ADDRESS (ctx));
 #endif
 // todo because did not understand
   gum_ppc_writer_put_la_reg_address (cw, MIPS_REG_AT,
@@ -266,11 +267,11 @@ _gum_interceptor_backend_activate_trampoline (GumInterceptorBackend * self,
                                               GumFunctionContext * ctx,
                                               gpointer prologue)
 {
-  GumMipsWriter * cw = &self->writer;
-  GumMipsFunctionContextData * data = GUM_FCDATA (ctx);
+  GumPpcWriter * cw = &self->writer;
+  GumPpcFunctionContextData * data = GUM_FCDATA (ctx);
   GumAddress on_enter = GUM_ADDRESS (ctx->on_enter_trampoline);
 
-  gum_mips_writer_reset (cw, prologue);
+  gum_ppc_writer_reset (cw, prologue);
   cw->pc = GUM_ADDRESS (ctx->function_address);
 
   if (ctx->trampoline_deflector != NULL)
@@ -283,38 +284,18 @@ _gum_interceptor_backend_activate_trampoline (GumInterceptorBackend * self,
     switch (data->redirect_code_size)
     {
       case 8:
-        gum_mips_writer_put_j_address (cw, on_enter);
+        /* TODO: support near relative jump B? */
+        g_assert_not_reached ();
         break;
       case GUM_HOOK_SIZE:
 #if GLIB_SIZEOF_VOID_P == 8
-        /*
-         * On MIPS64 loading a 64-bit immediate requires 16-bits of the
-         * immediate to be loaded at a time since instructions are only 32-bits
-         * wide. This results in a large number of instructions both for the
-         * loading as well as logical shifting of the immediate.
-         *
-         * Therefore on 64-bit platforms we instead embed the immediate in the
-         * code stream and read its value from there. However, we need to know
-         * the address from which to load the value. Since our hook is to be
-         * written over the prolog of an existing function, we can rely upon
-         * this.
-         *
-         * MIPS has no architectural visibility of the instruction pointer.
-         * That is its value cannot be read and there is no RIP-relative
-         * addressing. Therefore convention is that a general purpose register
-         * (T9) is set to the address of the function to be called. We can
-         * therefore use this register to locate the immediate we need to load.
-         * However, this mechanism only works for loading immediates for the
-         * hook since if we are writing instructions to load an immediate
-         * elsewhere, we don't know how far our RIP is from the start of the
-         * function. However, in these cases we don't care about code size and
-         * we can instead revert to the old method of shuffling 16-bits at
-         * a time.
-         */
-        gum_mips_writer_put_prologue_trampoline (cw, MIPS_REG_AT, on_enter);
+        /* PPC64: TODO */
+        g_assert_not_reached ();
 #else
-        gum_mips_writer_put_la_reg_address (cw, MIPS_REG_AT, on_enter);
-        gum_mips_writer_put_jr_reg (cw, MIPS_REG_AT);
+        /* Load imm32 into reg, copy reg to CTR, branch to CTR */
+        gum_ppc_writer_put_li32_reg_address (cw, MIPS_REG_R11, on_enter);
+        gum_ppc_writer_put_mtctr_reg (cw, MIPS_REG_R11);
+        gum_ppc_writer_put_bctr (cw);
 #endif
         break;
       default:
@@ -322,8 +303,8 @@ _gum_interceptor_backend_activate_trampoline (GumInterceptorBackend * self,
     }
   }
 
-  gum_mips_writer_flush (cw);
-  g_assert (gum_mips_writer_offset (cw) <= data->redirect_code_size);
+  gum_ppc_writer_flush (cw);
+  g_assert (gum_ppc_writer_offset (cw) <= data->redirect_code_size);
 }
 
 void
