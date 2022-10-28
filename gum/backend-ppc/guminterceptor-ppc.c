@@ -5,8 +5,6 @@
  */
 
 #include "guminterceptor-priv.h"
-
-#include "gumppcreader.h"
 #include "gumppcrelocator.h"
 #include "gumppcwriter.h"
 #include "gumlibc.h"
@@ -38,9 +36,9 @@
     (GUM_FRAME_OFFSET_CPU_CONTEXT + sizeof(GumCpuContext))
 
 #define GUM_FCDATA(context) \
-    ((GumPPCFunctionContextData *) (context)->backend_data.storage)
+    ((GumPpcFunctionContextData *) (context)->backend_data.storage)
 
-typedef struct _GumPPCFunctionContextData GumPPCFunctionContextData;
+typedef struct _GumPpcFunctionContextData GumPpcFunctionContextData;
 
 struct _GumInterceptorBackend
 {
@@ -53,13 +51,13 @@ struct _GumInterceptorBackend
   GumCodeSlice * leave_thunk;
 };
 
-struct _GumPPCFunctionContextData
+struct _GumPpcFunctionContextData
 {
   guint redirect_code_size;
   mips_reg scratch_reg;
 };
 
-G_STATIC_ASSERT (sizeof (GumPPCFunctionContextData)
+G_STATIC_ASSERT (sizeof (GumPpcFunctionContextData)
     <= sizeof (GumFunctionContextBackendData));
 
 static void gum_interceptor_backend_create_thunks (
@@ -67,11 +65,11 @@ static void gum_interceptor_backend_create_thunks (
 static void gum_interceptor_backend_destroy_thunks (
     GumInterceptorBackend * self);
 
-static void gum_emit_enter_thunk (GumPPCWriter * aw);
-static void gum_emit_leave_thunk (GumPPCWriter * aw);
+static void gum_emit_enter_thunk (GumPpcWriter * aw);
+static void gum_emit_leave_thunk (GumPpcWriter * aw);
 
-static void gum_emit_prolog (GumPPCWriter * aw);
-static void gum_emit_epilog (GumPPCWriter * aw);
+static void gum_emit_prolog (GumPpcWriter * aw);
+static void gum_emit_epilog (GumPpcWriter * aw);
 
 GumInterceptorBackend *
 _gum_interceptor_backend_create (GRecMutex * mutex,
@@ -113,7 +111,7 @@ gum_interceptor_backend_prepare_trampoline (GumInterceptorBackend * self,
                                             GumFunctionContext * ctx,
                                             gboolean * need_deflector)
 {
-  GumPPCFunctionContextData * data = GUM_FCDATA (ctx);
+  GumPpcFunctionContextData * data = GUM_FCDATA (ctx);
   gpointer function_address = ctx->function_address;
   guint redirect_limit;
 
@@ -163,10 +161,10 @@ gboolean
 _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
                                             GumFunctionContext * ctx)
 {
-  GumPPCWriter * cw = &self->writer;
-  GumPPCRelocator * rl = &self->relocator;
+  GumPpcWriter * cw = &self->writer;
+  GumPpcRelocator * rl = &self->relocator;
   gpointer function_address = ctx->function_address;
-  GumPPCFunctionContextData * data = GUM_FCDATA (ctx);
+  GumPpcFunctionContextData * data = GUM_FCDATA (ctx);
   gboolean need_deflector;
   guint reloc_bytes;
 
