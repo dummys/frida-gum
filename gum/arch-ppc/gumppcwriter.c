@@ -67,6 +67,11 @@ gum_ppc_writer_reset (GumPpcWriter * writer,
     gum_metal_array_remove_all (&writer->label_refs);
 }
 
+gboolean
+gum_ppc_writer_flush (GumPpcWriter * self)
+{
+    return TRUE;
+}
 
 /* Load 32bit immediate shifted, pseudo instruction */
 void
