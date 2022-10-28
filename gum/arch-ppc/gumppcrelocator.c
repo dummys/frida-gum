@@ -29,8 +29,8 @@ static gboolean gum_ppc_relocator_write_one_instruction (
     GumPpcRelocator * self);
 static void gum_ppc_relocator_put_label_for (GumPpcRelocator * self,
     cs_insn * insn);
-static gboolean gum_x86_relocator_rewrite_unconditional_branch (
-    GumX86Relocator * self, GumCodeGenCtx * ctx);
+static gboolean gum_ppc_relocator_rewrite_unconditional_branch (
+    GumPpcRelocator * self, GumCodeGenCtx * ctx);
 
 void
 gum_ppc_relocator_init (GumPpcRelocator * relocator,
@@ -261,42 +261,14 @@ gum_ppc_relocator_write_one (GumPpcRelocator * self)
     return FALSE;
 
   gum_ppc_relocator_put_label_for (self, cur);
-
-  return gum_ppc_relocator_write_one_instruction (self);
-}
-
-static gboolean
-gum_ppc_relocator_write_one_instruction (GumPpcRelocator * self)
-{
-  cs_insn * insn;
-  GumCodeGenCtx ctx;
-  gboolean rewritten = FALSE;
-
-  if ((insn = gum_ppc_relocator_peek_next_write_insn (self)) == NULL)
-    return FALSE;
-  gum_ppc_relocator_increment_outpos (self);
-
-  ctx.insn = insn;
-  ctx.pc = insn->address + insn->size;
-  ctx.code_writer = self->output;
-
+  
   switch (insn->id)
   {
-    case PPC_INS_B:
-    case PPC_INS_BA:
-      rewritten = gum_ppc_relocator_rewrite_unconditional_branch (self, &ctx);
+    default:
+      rewritten = FALSE;
       break;
-
-
   }
 
-void
-gum_ppc_relocator_write_all (GumPpcRelocator * self)
-{
-  guint count = 0;
-
-  while (gum_ppc_relocator_write_one (self))
-    count++;
-
-  g_assert (count > 0);
+  if (!rewritten)
+    gum_ppc_writer_put_bytes (ctx.output, insn->bytes, insn->size);
 }
