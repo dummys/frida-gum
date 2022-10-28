@@ -7,7 +7,7 @@
 #ifndef __GUM_PPC_RELOCATOR_H__
 #define __GUM_PPC_RELOCATOR_H__
 
-#include "gumPPCwriter.h"
+#include "gumppcwriter.h"
 
 #include <capstone.h>
 
