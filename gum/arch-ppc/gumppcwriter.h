@@ -22,8 +22,6 @@ struct _GumPpcWriter
 {
   volatile gint ref_count;
   gboolean flush_on_destroy;
-
-  GumCpuType target_cpu;
   
   guint32 * base;
   guint32 * code;
