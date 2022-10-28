@@ -182,3 +182,9 @@ gum_ppc_writer_describe_reg (GumPpcWriter * self,
     g_assert_not_reached ();
   }
 }
+
+guint
+gum_ppc_writer_offset (GumPpcWriter * self)
+{
+  return self->code - self->base;
+}
