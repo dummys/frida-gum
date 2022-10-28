@@ -51,7 +51,7 @@ typedef union _GumArmVectorReg GumArmVectorReg;
 typedef struct _GumArm64CpuContext GumArm64CpuContext;
 typedef union _GumArm64VectorReg GumArm64VectorReg;
 typedef struct _GumMipsCpuContext GumMipsCpuContext;
-typedef struct _GumPPCCpuContext GumPPCCpuContext;
+typedef struct _GumPpcCpuContext GumPpcCpuContext;
 typedef guint GumRelocationScenario;
 
 #if defined (_M_IX86) || defined (__i386__)
@@ -105,15 +105,24 @@ typedef GumArm64CpuContext GumCpuContext;
     (CS_MODE_MIPS64 | GUM_DEFAULT_CS_ENDIAN))
 # endif
 typedef GumMipsCpuContext GumCpuContext;
-#elif defined (__PPC__) && GLIB_SIZEOF_VOID_P == 4
+#elif defined (__PPC__)
 # define GUM_NATIVE_CPU GUM_CPU_PPC
 # define GUM_DEFAULT_CS_ARCH CS_ARCH_PPC
+# if GLIB_SIZEOF_VOID_P == 4
 /**
  * GUM_DEFAULT_CS_MODE: (skip)
  */
 #  define GUM_DEFAULT_CS_MODE ((cs_mode) \
     (CS_MODE_32 | GUM_DEFAULT_CS_ENDIAN))
-typedef GumPPCCpuContext GumCpuContext;
+#else
+/**
+ * GUM_DEFAULT_CS_MODE: (skip)
+ */
+
+# define GUM_DEFAULT_CS_MODE ((cs_mode) \
+    (CS_MODE_64 | GUM_DEFAULT_CS_ENDIAN))
+#endif
+typedef GumPpcCpuContext GumCpuContext;
 #else
 # error Unsupported architecture.
 #endif
@@ -352,7 +361,7 @@ struct _GumMipsCpuContext
   gsize k1;
 };
 
-struct _GumPPCCpuContext
+struct _GumPpcCpuContext
 {
   /*
    * The PPC architecture has 32 General purpose registers with size 32bit and 32 Floating-Point registers with size 64bit.
