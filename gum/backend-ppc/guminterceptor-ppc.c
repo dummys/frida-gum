@@ -19,17 +19,15 @@
  * is a minimalist stub which simply vectors to the larger trampoline which
  * stores the CPU context and transitions to C code passing the necessary
  * landmarks.
- *
- * On MIPS64, whilst FPR register can be 64 bits wide, the instruction stream
- * is only 32 bits. With fixed width 32-bit instructions, it is only possible
- * to load 16 bit immediate values at a time. Hence loading a 64-bit immediate
- * value takes rather more instructions.
  */
 #if GLIB_SIZEOF_VOID_P == 8
 # define GUM_HOOK_SIZE 28
 #else
 # define GUM_HOOK_SIZE 16
 #endif
+
+#define USE_SCRATCH_REGISTER 0
+
 
 #define GUM_FRAME_OFFSET_CPU_CONTEXT 0
 #define GUM_FRAME_OFFSET_NEXT_HOP \
@@ -44,8 +42,8 @@ struct _GumInterceptorBackend
 {
   GumCodeAllocator * allocator;
 
-  GumPPCWriter writer;
-  GumPPCRelocator relocator;
+  GumPpcWriter writer;
+  GumPpcRelocator relocator;
 
   GumCodeSlice * enter_thunk;
   GumCodeSlice * leave_thunk;
@@ -147,8 +145,7 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
 
   gum_ppc_writer_reset (cw, ctx->trampoline_slice->data);
 
-  /*
-   * On PPC the calling convention is that r3- r10, thus 8 arguments, are 
+  /* On PPC the calling convention is that r3- r10, thus 8 arguments, are 
    * passed in registers, but they can also be passed on the stack. Hence r11
    * is our first available register, otherwise we will start clobbering 
    * function parameters. However, most volatile registers also have predefined
@@ -157,10 +154,10 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
    */
 
   /* On_enter trampoline:
-   * LI32 R0, enter_thunk     # Load enter_thunk address
+   * LI32 R0, enter_thunk     # Load enter_thunk address (LIS, ORI)
    * MTCTR R0                 # Move it to CTR
    * LI32 R0, ctx             # Load ctx address as param
-   * BCTR                     # Branch to CTR -> call enter_thunk(ctx)
+   * BCTR                     # Branch to CTR -> jump to enter_thunk(ctx)
    */
   ctx->on_enter_trampoline = gum_ppc_writer_cur (cw);
   gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (self->enter_thunk->data));
@@ -169,10 +166,10 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
   gum_ppc_writer_put_bctr (cw);
 
   /* On_leave trampoline:
-   * LI32 R0, leave_thunk     # Load leave_thunk address
+   * LI32 R0, leave_thunk     # Load leave_thunk address (LIS, ORI)
    * MTCTR R0                 # Move it to CTR
-   * LI32 R0, ctx             # Load ctx address as param
-   * BCTR                     # Branch to CTR -> call leave_thunk(ctx)
+   * LI32 R0, ctx             # Load ctx address as param (LIS, ORI)
+   * BCTR                     # Branch to CTR -> jump to leave_thunk(ctx)
    */
   ctx->on_leave_trampoline = gum_ppc_writer_cur (cw);
   gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (self->leave_thunk->data));
@@ -187,6 +184,7 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
    * Populate with instructions from the original function as they will be 
    * overwritten by the redirection hook).
    * Then jump back to resume the original function. 
+   * TODO: Load CTR before relocated code?
    */
   ctx->on_invoke_trampoline = gum_ppc_writer_cur (cw);
   gum_ppc_relocator_reset (rl, function_address, cw);
@@ -202,10 +200,30 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
   {
     GumAddress resume_at;
     resume_at = GUM_ADDRESS (function_address) + reloc_bytes;
-    /* Use detected scratch register to prevent register clobbering */
+
+#if USE_SCRATCH_REGISTER == 1
+    /* LI32 Rx, resume_at       # Load resume_at address (LIS, ORI)
+     * MTCTR Rx                 # Move it to CTR
+     * BCTR                     # Branch to CTR -> jump to resume_at
+     * (Use detected scratch register Rx to prevent register clobbering)
+     */
     gum_ppc_writer_put_li32_reg_address (cw, data->scratch_reg, resume_at);
     gum_ppc_writer_put_mtctr_reg (cw, data->scratch_reg);
     gum_ppc_writer_put_bctr (cw);
+#else
+    /* PUSH R0                  # Push temp register
+     * LI32 R0, resume_at       # Load resume_at address (LIS, ORI)
+     * MTCTR R0                 # Move it to CTR
+     * POP R0                   # Pop temp register
+     * BCTR                     # Branch to CTR -> jump to resume_at
+     * (Save R0 on stack to prevent register clobbering. Is stack valid here?)
+     */
+    /* PUSH */
+    gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, resume_at);
+    gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
+    /* POP */
+    gum_ppc_writer_put_bctr (cw);
+#endif
   }
 
   gum_ppc_writer_flush (cw);
@@ -239,34 +257,27 @@ _gum_interceptor_backend_activate_trampoline (GumInterceptorBackend * self,
   gum_ppc_writer_reset (cw, prologue);
   cw->pc = GUM_ADDRESS (ctx->function_address);
 
-  if (ctx->trampoline_deflector != NULL)
+  switch (data->redirect_code_size)
   {
-    /* TODO: implement branch to deflector */
-    g_assert_not_reached ();
-  }
-  else
-  {
-    switch (data->redirect_code_size)
-    {
-      case 8:
-        /* TODO: support near relative jump B ? */
-        g_assert_not_reached ();
-        break;
-      case GUM_HOOK_SIZE:
+    case 8:
+      /* TODO: support near relative jump B ? */
+      g_assert_not_reached ();
+      break;
+    case GUM_HOOK_SIZE:
 #if GLIB_SIZEOF_VOID_P == 8
-        /* PPC64: TODO */
-        g_assert_not_reached ();
+      /* PPC64: TODO */
+      g_assert_not_reached ();
 #else
-        /* Load imm32 into reg, copy reg to CTR, branch to CTR */
-        gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, on_enter);
-        gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
-        gum_ppc_writer_put_bctr (cw);
+      /* Load imm32 into reg, copy reg to CTR, branch to CTR */
+      gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, on_enter);
+      gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
+      gum_ppc_writer_put_bctr (cw);
 #endif
-        break;
-      default:
-        g_assert_not_reached ();
-    }
+      break;
+    default:
+      g_assert_not_reached ();
   }
+
 
   gum_ppc_writer_flush (cw);
   g_assert (gum_ppc_writer_offset (cw) <= data->redirect_code_size);
@@ -334,22 +345,12 @@ gum_emit_enter_thunk (GumPpcWriter * cw)
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A3, MIPS_REG_SP,
       GUM_FRAME_OFFSET_NEXT_HOP);
 
-#if GLIB_SIZEOF_VOID_P == 8
-  /* See earlier comment on clobbered registers. */
-  gum_mips_writer_put_call_address_with_arguments (cw,
-      GUM_ADDRESS (_gum_function_context_begin_invocation), 4,
-      GUM_ARG_REGISTER, MIPS_REG_T4,
-      GUM_ARG_REGISTER, MIPS_REG_A1,  /* cpu_context */
-      GUM_ARG_REGISTER, MIPS_REG_A2,  /* return_address */
-      GUM_ARG_REGISTER, MIPS_REG_A3); /* next_hop */
-#else
   gum_mips_writer_put_call_address_with_arguments (cw,
       GUM_ADDRESS (_gum_function_context_begin_invocation), 4,
       GUM_ARG_REGISTER, MIPS_REG_T0,
       GUM_ARG_REGISTER, MIPS_REG_A1,  /* cpu_context */
       GUM_ARG_REGISTER, MIPS_REG_A2,  /* return_address */
       GUM_ARG_REGISTER, MIPS_REG_A3); /* next_hop */
-#endif
 
   gum_emit_epilog (cw);
 }
@@ -364,20 +365,12 @@ gum_emit_leave_thunk (GumPpcWriter * cw)
       GUM_FRAME_OFFSET_CPU_CONTEXT);
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A2, MIPS_REG_SP,
       GUM_FRAME_OFFSET_NEXT_HOP);
-#if GLIB_SIZEOF_VOID_P == 8
-  /* See earlier comment on clobbered registers. */
-  gum_mips_writer_put_call_address_with_arguments (cw,
-      GUM_ADDRESS (_gum_function_context_end_invocation), 3,
-      GUM_ARG_REGISTER, MIPS_REG_T4,
-      GUM_ARG_REGISTER, MIPS_REG_A1,  /* cpu_context */
-      GUM_ARG_REGISTER, MIPS_REG_A2); /* next_hop */
-#else
+
   gum_mips_writer_put_call_address_with_arguments (cw,
       GUM_ADDRESS (_gum_function_context_end_invocation), 3,
       GUM_ARG_REGISTER, MIPS_REG_T0,
       GUM_ARG_REGISTER, MIPS_REG_A1,  /* cpu_context */
       GUM_ARG_REGISTER, MIPS_REG_A2); /* next_hop */
-#endif
 
   gum_emit_epilog (cw);
 }
