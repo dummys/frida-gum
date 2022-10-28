@@ -79,13 +79,8 @@ gum_ppc_writer_put_li32_reg_address (GumPpcWriter * self,
                                      ppc_reg reg,
                                      GumAddress address)
 {
-#if GLIB_SIZEOF_VOID_P == 8
-  /* PPC64: TODO */
-  g_assert_not_reached ();
-#else
   gum_ppc_writer_put_lis_reg_imm (self, reg, address >> 16);
   gum_ppc_writer_put_ori_reg_reg_imm (self, reg, reg, address & 0xffff);
-#endif
 }
 
 
