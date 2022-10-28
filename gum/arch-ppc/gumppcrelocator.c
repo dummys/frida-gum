@@ -62,7 +62,8 @@ gum_ppc_relocator_eoi (GumPpcRelocator * self)
 gboolean
 gum_ppc_relocator_can_relocate (gpointer address,
                                 guint min_bytes,
-                                guint * maximum)
+                                guint * maximum,
+                                ppc_reg * available_scratch_reg)
 {
   guint n = 0;
   guint8 * buf;
@@ -84,6 +85,9 @@ gum_ppc_relocator_can_relocate (gpointer address,
     n = reloc_bytes;
   }
   while (reloc_bytes < min_bytes);
+
+  /* TODO: search for available scratch register (see MIPS code) */
+  available_scratch_reg = PPC_REG_R0;
 
   gum_ppc_relocator_clear (&rl);
 

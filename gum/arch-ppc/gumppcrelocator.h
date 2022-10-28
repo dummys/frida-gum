@@ -13,9 +13,9 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GumPPCRelocator GumPPCRelocator;
+typedef struct _GumPpcRelocator GumPpcRelocator;
 
-struct _GumPPCRelocator
+struct _GumPpcRelocator
 {
   volatile gint ref_count;
 
@@ -34,36 +34,36 @@ struct _GumPPCRelocator
   gboolean eoi;
 };
 
-GUM_API GumPPCRelocator * gum_ppc_relocator_new (gconstpointer input_code,
+GUM_API GumPpcRelocator * gum_ppc_relocator_new (gconstpointer input_code,
     GumPPCWriter * output);
-GUM_API GumPPCRelocator * gum_ppc_relocator_ref (GumPPCRelocator * relocator);
-GUM_API void gum_ppc_relocator_unref (GumPPCRelocator * relocator);
+GUM_API GumPpcRelocator * gum_ppc_relocator_ref (GumPpcRelocator * relocator);
+GUM_API void gum_ppc_relocator_unref (GumPpcRelocator * relocator);
 
-GUM_API void gum_ppc_relocator_init (GumPPCRelocator * relocator,
+GUM_API void gum_ppc_relocator_init (GumPpcRelocator * relocator,
     gconstpointer input_code, GumPPCWriter * output);
-GUM_API void gum_ppc_relocator_clear (GumPPCRelocator * relocator);
+GUM_API void gum_ppc_relocator_clear (GumPpcRelocator * relocator);
 
-GUM_API void gum_ppc_relocator_reset (GumPPCRelocator * relocator,
+GUM_API void gum_ppc_relocator_reset (GumPpcRelocator * relocator,
     gconstpointer input_code, GumPPCWriter * output);
 
-GUM_API guint gum_ppc_relocator_read_one (GumPPCRelocator * self,
+GUM_API guint gum_ppc_relocator_read_one (GumPpcRelocator * self,
     const cs_insn ** instruction);
 
 GUM_API cs_insn * gum_ppc_relocator_peek_next_write_insn (
-    GumPPCRelocator * self);
+    GumPpcRelocator * self);
 GUM_API gpointer gum_ppc_relocator_peek_next_write_source (
-    GumPPCRelocator * self);
-GUM_API void gum_ppc_relocator_skip_one (GumPPCRelocator * self);
-GUM_API void gum_ppc_relocator_skip_one_no_label (GumPPCRelocator * self);
-GUM_API gboolean gum_ppc_relocator_write_one (GumPPCRelocator * self);
-GUM_API gboolean gum_ppc_relocator_write_one_no_label (GumPPCRelocator * self);
-GUM_API void gum_ppc_relocator_write_all (GumPPCRelocator * self);
+    GumPpcRelocator * self);
+GUM_API void gum_ppc_relocator_skip_one (GumPpcRelocator * self);
+GUM_API void gum_ppc_relocator_skip_one_no_label (GumPpcRelocator * self);
+GUM_API gboolean gum_ppc_relocator_write_one (GumPpcRelocator * self);
+GUM_API gboolean gum_ppc_relocator_write_one_no_label (GumPpcRelocator * self);
+GUM_API void gum_ppc_relocator_write_all (GumPpcRelocator * self);
 
-GUM_API gboolean gum_ppc_relocator_eob (GumPPCRelocator * self);
-GUM_API gboolean gum_ppc_relocator_eoi (GumPPCRelocator * self);
+GUM_API gboolean gum_ppc_relocator_eob (GumPpcRelocator * self);
+GUM_API gboolean gum_ppc_relocator_eoi (GumPpcRelocator * self);
 
 GUM_API gboolean gum_ppc_relocator_can_relocate (gpointer address,
-    guint min_bytes, guint * maximum);
+    guint min_bytes, guint * maximum, ppc_reg * available_scratch_reg);
 GUM_API guint gum_ppc_relocator_relocate (gpointer from, guint min_bytes,
     gpointer to);
 

@@ -54,7 +54,7 @@ struct _GumInterceptorBackend
 struct _GumPpcFunctionContextData
 {
   guint redirect_code_size;
-  mips_reg scratch_reg;
+  ppc_reg scratch_reg;
 };
 
 G_STATIC_ASSERT (sizeof (GumPpcFunctionContextData)
@@ -108,50 +108,25 @@ _gum_interceptor_backend_claim_grafted_trampoline (GumInterceptorBackend * self,
 
 static gboolean
 gum_interceptor_backend_prepare_trampoline (GumInterceptorBackend * self,
-                                            GumFunctionContext * ctx,
-                                            gboolean * need_deflector)
+                                            GumFunctionContext * ctx)
 {
   GumPpcFunctionContextData * data = GUM_FCDATA (ctx);
-  gpointer function_address = ctx->function_address;
-  guint redirect_limit;
 
-  *need_deflector = FALSE;
-  /* TODO: check hook size */
-  if (gum_ppc_relocator_can_relocate (function_address, GUM_HOOK_SIZE,
-      GUM_SCENARIO_ONLINE, &redirect_limit, &data->scratch_reg))
+  data->redirect_code_size = GUM_HOOK_SIZE;
+
+  ctx->trampoline_slice = gum_code_allocator_alloc_slice (self->allocator);
+
+  if (!gum_ppc_relocator_can_relocate (ctx->function_address,
+        data->redirect_code_size, NULL, &data->scratch_reg))
   {
-    data->redirect_code_size = GUM_HOOK_SIZE;
-
-    ctx->trampoline_slice = gum_code_allocator_alloc_slice (self->allocator);
-  }
-  else
-  {
-    GumAddressSpec spec;
-    gsize alignment;
-
-    if (redirect_limit >= 8)
-    {
-      data->redirect_code_size = 8;
-
-      spec.near_address = function_address;
-      spec.max_distance = GUM_PPC_B_MAX_DISTANCE;
-      alignment = 0;
-    }
-    else
-    {
-      return FALSE;
-    }
-
-    ctx->trampoline_slice = gum_code_allocator_try_alloc_slice_near (
-        self->allocator, &spec, alignment);
-    if (ctx->trampoline_slice == NULL)
-    {
-      ctx->trampoline_slice = gum_code_allocator_alloc_slice (self->allocator);
-      *need_deflector = TRUE;
-    }
+    /* Not enough space for hook */
+    gum_code_slice_unref (ctx->trampoline_slice); /* free slice */
+    ctx->trampoline_slice = NULL;
+    return FALSE;
   }
 
-  if (data->scratch_reg == PPC_REG_INVALID) /* from capstone/ppc.h */
+  /* Check if a scratch register was found */
+  if (data->scratch_reg == PPC_REG_INVALID)
     return FALSE;
 
   return TRUE;
@@ -165,84 +140,76 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
   GumPpcRelocator * rl = &self->relocator;
   gpointer function_address = ctx->function_address;
   GumPpcFunctionContextData * data = GUM_FCDATA (ctx);
-  gboolean need_deflector;
   guint reloc_bytes;
 
-  if (!gum_interceptor_backend_prepare_trampoline (self, ctx, &need_deflector))
+  if (!gum_interceptor_backend_prepare_trampoline (self, ctx))
     return FALSE;
 
   gum_ppc_writer_reset (cw, ctx->trampoline_slice->data);
 
-  ctx->on_enter_trampoline = gum_ppc_writer_cur (cw);
-
-  if (need_deflector)
-  {
-    /* TODO: implement deflector behavior */
-    g_assert_not_reached ();
-  }
-
-  /* TODO: save some regs on the stack? */
-
-#if GLIB_SIZEOF_VOID_P == 8
   /*
-   * TODO: check on PPC64
-   * On PPC the calling convention is that r3- r10, thus 8 arguments are passed in
-   * registers, but it can also be passed on the stack. Hence r11 is our first
-   * available register, otherwise we will start clobbering function parameters.
+   * On PPC the calling convention is that r3- r10, thus 8 arguments, are 
+   * passed in registers, but they can also be passed on the stack. Hence r11
+   * is our first available register, otherwise we will start clobbering 
+   * function parameters. However, most volatile registers also have predefined
+   * funtions. r0 appears to be a good candidate for storing temporary data. 
+   * TODO: To be verified.
    */
-  gum_ppc_writer_put_la_reg_address (cw, PPC_REG_R11, GUM_ADDRESS (ctx));
-#else
-  gum_ppc_writer_put_la_reg_address (cw, PPC_REG_R11, GUM_ADDRESS (ctx));
-#endif
-// todo because did not understand
-  gum_ppc_writer_put_la_reg_address (cw, MIPS_REG_AT,
-      GUM_ADDRESS (self->enter_thunk->data));
-  gum_ppc_writer_put_jr_reg (cw, MIPS_REG_AT);
 
+  /* On_enter trampoline:
+   * LI32 R0, enter_thunk     # Load enter_thunk address
+   * MTCTR R0                 # Move it to CTR
+   * LI32 R0, ctx             # Load ctx address as param
+   * BCTR                     # Branch to CTR -> call enter_thunk(ctx)
+   */
+  ctx->on_enter_trampoline = gum_ppc_writer_cur (cw);
+  gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (self->enter_thunk->data));
+  gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
+  gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (ctx));
+  gum_ppc_writer_put_bctr (cw);
+
+  /* On_leave trampoline:
+   * LI32 R0, leave_thunk     # Load leave_thunk address
+   * MTCTR R0                 # Move it to CTR
+   * LI32 R0, ctx             # Load ctx address as param
+   * BCTR                     # Branch to CTR -> call leave_thunk(ctx)
+   */
   ctx->on_leave_trampoline = gum_ppc_writer_cur (cw);
+  gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (self->leave_thunk->data));
+  gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
+  gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (ctx));
+  gum_ppc_writer_put_bctr (cw);
 
-#if GLIB_SIZEOF_VOID_P == 8
-// TODO
-  /* See earlier comment on clobbered registers. */
-  gum_mips_writer_put_la_reg_address (cw, MIPS_REG_T4, GUM_ADDRESS (ctx));
-#else
-  gum_mips_writer_put_la_reg_address (cw, MIPS_REG_T0, GUM_ADDRESS (ctx));
-#endif
-  gum_mips_writer_put_la_reg_address (cw, MIPS_REG_AT,
-      GUM_ADDRESS (self->leave_thunk->data));
-  gum_mips_writer_put_jr_reg (cw, MIPS_REG_AT);
+  gum_ppc_writer_flush (cw);
+  g_assert (gum_ppc_writer_offset (cw) <= ctx->trampoline_slice->size);
 
-  gum_mips_writer_flush (cw);
-  g_assert (gum_mips_writer_offset (cw) <= ctx->trampoline_slice->size);
-
-  ctx->on_invoke_trampoline = gum_mips_writer_cur (cw);
-
-  /* Fix t9 to point to the original function address */
-  gum_mips_writer_put_la_reg_address (cw, MIPS_REG_T9,
-      GUM_ADDRESS (function_address));
-
-  gum_mips_relocator_reset (rl, function_address, cw);
-
+  /* On_invoke trampoline:
+   * Populate with instructions from the original function as they will be 
+   * overwritten by the redirection hook).
+   * Then jump back to resume the original function. 
+   */
+  ctx->on_invoke_trampoline = gum_ppc_writer_cur (cw);
+  gum_ppc_relocator_reset (rl, function_address, cw);
   do
   {
-    reloc_bytes = gum_mips_relocator_read_one (rl, NULL);
+    reloc_bytes = gum_ppc_relocator_read_one (rl, NULL);
     g_assert (reloc_bytes != 0);
   }
-  while (reloc_bytes < data->redirect_code_size || rl->delay_slot_pending);
+  while (reloc_bytes < data->redirect_code_size);
+  gum_ppc_relocator_write_all (rl);
 
-  gum_mips_relocator_write_all (rl);
-
-  if (!rl->eoi)
+  if (!gum_ppc_relocator_eoi (rl))
   {
     GumAddress resume_at;
-
     resume_at = GUM_ADDRESS (function_address) + reloc_bytes;
-    gum_mips_writer_put_la_reg_address (cw, data->scratch_reg, resume_at);
-    gum_mips_writer_put_jr_reg (cw, data->scratch_reg);
+    /* Use detected scratch register to prevent register clobbering */
+    gum_ppc_writer_put_li32_reg_address (cw, data->scratch_reg, resume_at);
+    gum_ppc_writer_put_mtctr_reg (cw, data->scratch_reg);
+    gum_ppc_writer_put_bctr (cw);
   }
 
-  gum_mips_writer_flush (cw);
-  g_assert (gum_mips_writer_offset (cw) <= ctx->trampoline_slice->size);
+  gum_ppc_writer_flush (cw);
+  g_assert (gum_ppc_writer_offset (cw) <= ctx->trampoline_slice->size);
 
   ctx->overwritten_prologue_len = reloc_bytes;
   gum_memcpy (ctx->overwritten_prologue, function_address, reloc_bytes);
@@ -291,8 +258,8 @@ _gum_interceptor_backend_activate_trampoline (GumInterceptorBackend * self,
         g_assert_not_reached ();
 #else
         /* Load imm32 into reg, copy reg to CTR, branch to CTR */
-        gum_ppc_writer_put_li32_reg_address (cw, MIPS_REG_R11, on_enter);
-        gum_ppc_writer_put_mtctr_reg (cw, MIPS_REG_R11);
+        gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, on_enter);
+        gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
         gum_ppc_writer_put_bctr (cw);
 #endif
         break;
@@ -331,19 +298,19 @@ _gum_interceptor_backend_resolve_redirect (GumInterceptorBackend * self,
 static void
 gum_interceptor_backend_create_thunks (GumInterceptorBackend * self)
 {
-  GumMipsWriter * cw = &self->writer;
+  GumPpcWriter * cw = &self->writer;
 
   self->enter_thunk = gum_code_allocator_alloc_slice (self->allocator);
-  gum_mips_writer_reset (cw, self->enter_thunk->data);
+  gum_ppc_writer_reset (cw, self->enter_thunk->data);
   gum_emit_enter_thunk (cw);
-  gum_mips_writer_flush (cw);
-  g_assert (gum_mips_writer_offset (cw) <= self->enter_thunk->size);
+  gum_ppc_writer_flush (cw);
+  g_assert (gum_ppc_writer_offset (cw) <= self->enter_thunk->size);
 
   self->leave_thunk = gum_code_allocator_alloc_slice (self->allocator);
-  gum_mips_writer_reset (cw, self->leave_thunk->data);
+  gum_ppc_writer_reset (cw, self->leave_thunk->data);
   gum_emit_leave_thunk (cw);
-  gum_mips_writer_flush (cw);
-  g_assert (gum_mips_writer_offset (cw) <= self->leave_thunk->size);
+  gum_ppc_writer_flush (cw);
+  g_assert (gum_ppc_writer_offset (cw) <= self->leave_thunk->size);
 }
 
 static void
@@ -355,10 +322,11 @@ gum_interceptor_backend_destroy_thunks (GumInterceptorBackend * self)
 }
 
 static void
-gum_emit_enter_thunk (GumMipsWriter * cw)
+gum_emit_enter_thunk (GumPpcWriter * cw)
 {
   gum_emit_prolog (cw);
 
+  /* TODO */
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A1, MIPS_REG_SP,
       GUM_FRAME_OFFSET_CPU_CONTEXT);
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A2, MIPS_REG_SP,
@@ -387,10 +355,11 @@ gum_emit_enter_thunk (GumMipsWriter * cw)
 }
 
 static void
-gum_emit_leave_thunk (GumMipsWriter * cw)
+gum_emit_leave_thunk (GumPpcWriter * cw)
 {
   gum_emit_prolog (cw);
 
+  /* TODO */
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A1, MIPS_REG_SP,
       GUM_FRAME_OFFSET_CPU_CONTEXT);
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A2, MIPS_REG_SP,
@@ -414,7 +383,7 @@ gum_emit_leave_thunk (GumMipsWriter * cw)
 }
 
 static void
-gum_emit_prolog (GumMipsWriter * cw)
+gum_emit_prolog (GumPpcWriter * cw)
 {
   /*
    * Set up our stack frame:
@@ -423,7 +392,7 @@ gum_emit_prolog (GumMipsWriter * cw)
    * [cpu_context]
    */
 
-  /* Reserve space for next_hop. */
+  /* TODO */
   gum_mips_writer_put_push_reg (cw, MIPS_REG_ZERO);
 
   gum_mips_writer_put_push_reg (cw, MIPS_REG_K1);
@@ -490,8 +459,9 @@ gum_emit_prolog (GumMipsWriter * cw)
 }
 
 static void
-gum_emit_epilog (GumMipsWriter * cw)
+gum_emit_epilog (GumPpcWriter * cw)
 {
+  /* TODO */
   /* Dummy PC */
   gum_mips_writer_put_pop_reg (cw, MIPS_REG_V0);
 
