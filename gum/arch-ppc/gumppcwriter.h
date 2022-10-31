@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010-2022 Ole André Vadla Ravnås <oleavr@nowsecure.com>
+ * Copyright (C)      2022 PMC, JOB
  *
  * Licence: wxWindows Library Licence, Version 3.1
  */
@@ -38,6 +39,7 @@ GUM_API GumPpcWriter * gum_ppc_writer_new (gpointer code_address);
 GUM_API GumPpcWriter * gum_ppc_writer_ref (GumPpcWriter * writer);
 GUM_API void gum_ppc_writer_unref (GumPpcWriter * writer);
 
+
 GUM_API void gum_ppc_writer_init (GumPpcWriter * writer, gpointer code_address);
 GUM_API void gum_ppc_writer_clear (GumPpcWriter * writer);
 GUM_API void gum_ppc_writer_reset (GumPpcWriter * writer,
@@ -67,32 +69,33 @@ GUM_API gboolean gum_ppc_writer_can_branch_directly_between (
     GumPpcWriter * self, GumAddress from, GumAddress to);
 */
 
-void gum_ppc_writer_put_li32_reg_address (GumPpcWriter * self, ppc_reg reg, 
-    GumAddress address);
-void gum_ppc_writer_put_lis_reg_imm (GumPpcWriter * self, ppc_reg reg, 
+gboolean gum_ppc_writer_put_li32_reg_address (GumPpcWriter * self, 
+    ppc_reg reg, GumAddress address);
+gboolean gum_ppc_writer_put_lis_reg_imm (GumPpcWriter * self, ppc_reg reg, 
     guint imm);
-void gum_ppc_writer_put_addis_reg_reg_imm (GumPpcWriter * self, 
+gboolean gum_ppc_writer_put_addis_reg_reg_imm (GumPpcWriter * self, 
     ppc_reg dst_reg, ppc_reg src_reg, gint16 imm);
-void gum_ppc_writer_put_stwu_reg_reg_imm (GumPpcWriter * self, ppc_reg ptr_reg,
-    ppc_reg src_reg, gint16 imm);
-void gum_ppc_writer_put_push_reg (GumPpcWriter * self, ppc_reg src_reg);
-void gum_ppc_writer_put_ori_reg_reg_imm (GumPpcWriter * self, ppc_reg dst_reg,
-    ppc_reg src_reg, guint16 imm);
-void gum_ppc_writer_put_mtctr_reg (GumPpcWriter * self, ppc_reg src_reg);
-void gum_ppc_writer_put_bctr_offset (GumPpcWriter * self);
-void gum_ppc_writer_put_b_offset (GumPpcWriter * self, gint32 offset);
-void gum_ppc_writer_put_dform_reg_reg_imm (GumPpcWriter * self, guint8 opcode,
-    ppc_reg rts_reg, ppc_reg ra_reg, guint16 imm);
-static void gum_ppc_writer_describe_reg (GumPpcWriter * self,ppc_reg reg, 
-    GumPpcRegInfo * ri);
+gboolean gum_ppc_writer_put_stwu_reg_reg_imm (GumPpcWriter * self, 
+    ppc_reg ptr_reg,ppc_reg src_reg, gint16 imm);
+gboolean gum_ppc_writer_put_push_reg (GumPpcWriter * self, ppc_reg src_reg);
+gboolean gum_ppc_writer_put_ori_reg_reg_imm (GumPpcWriter * self, 
+    ppc_reg dst_reg, ppc_reg src_reg, guint16 imm);
+gboolean gum_ppc_writer_put_mtctr_reg (GumPpcWriter * self, ppc_reg src_reg);
+gboolean gum_ppc_writer_put_bctr_offset (GumPpcWriter * self);
+gboolean gum_ppc_writer_put_b_offset (GumPpcWriter * self, gint32 offset);
+
+gboolean gum_ppc_writer_put_push_fpreg (GumPpcWriter * self, ppc_reg src_reg);
+gboolean gum_ppc_writer_put_stfdu_reg_reg_imm (GumPpcWriter * self,
+    ppc_reg ptr_reg, ppc_reg src_reg, gint16 imm);
+
+
+gboolean gum_ppc_writer_put_dform_reg_reg_imm (GumPpcWriter * self, 
+    guint8 opcode, ppc_reg rts_reg, ppc_reg ra_reg, guint16 imm);
 
 guint gum_ppc_writer_offset (GumPpcWriter * self);
 
-void gum_mips_writer_put_nop (GumPpcWriter * self);
-
-void gum_ppc_writer_put_instruction (GumPpcWriter * self, guint32 insn);
-
-
+gboolean gum_ppc_writer_put_nop (GumPpcWriter * self);
+gboolean gum_ppc_writer_put_instruction (GumPpcWriter * self, guint32 insn);
 gboolean gum_ppc_writer_put_bytes (GumPpcWriter * self, const guint8 * data,
     guint n);
 

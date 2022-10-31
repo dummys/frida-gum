@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2010-2022 Ole André Vadla Ravnås <oleavr@nowsecure.com>
- * Copyright (C)      2019 Jon Wilson <jonwilson@zepler.net>
+ * Copyright (C)      2022 PMC, JOB
  *
  * Licence: wxWindows Library Licence, Version 3.1
  */
@@ -24,6 +24,39 @@ struct _GumPpcRegInfo
   guint width;
   guint index;
 };
+
+GumPpcWriter *
+gum_ppc_writer_new (gpointer code_address)
+{
+  GumPpcWriter * writer;
+
+  writer = g_slice_new (GumPpcWriter);
+
+  gum_ppc_writer_init (writer, code_address);
+
+  return writer;
+}
+
+GumPpcWriter *
+gum_ppc_writer_ref (GumPpcWriter * writer)
+{
+  g_atomic_int_inc (&writer->ref_count);
+
+  return writer;
+}
+
+void
+gum_ppc_writer_unref (GumPpcWriter * writer)
+{
+  if (g_atomic_int_dec_and_test (&writer->ref_count))
+  {
+    gum_ppc_writer_clear (writer);
+
+    g_slice_free (GumPpcWriter, writer);
+  }
+}
+
+
 
 void
 gum_ppc_writer_init (GumPpcWriter * writer,
@@ -84,6 +117,26 @@ gum_ppc_writer_flush (GumPpcWriter * self)
     return TRUE;
 }
 
+static void
+gum_ppc_writer_describe_reg (GumPpcWriter * self,
+                             ppc_reg reg,
+                             GumPpcRegInfo * ri)
+{
+  if (reg >= PPC_REG_R0 && reg <= PPC_REG_R31)
+  {
+    ri->width = GLIB_SIZEOF_VOID_P * 8;
+    ri->index = reg - PPC_REG_R0;
+  }
+  else if (reg >= PPC_REG_F0 && reg <= PPC_REG_F31)
+  {
+    ri->width = 2 * (GLIB_SIZEOF_VOID_P * 8);
+    ri->index = reg - PPC_REG_F0;
+  }
+  else
+  {
+    g_assert_not_reached ();
+  }
+}
 
 
 /* Load 32bit immediate shifted, pseudo instruction */
@@ -121,7 +174,7 @@ gum_ppc_writer_put_addis_reg_reg_imm (GumPpcWriter * self,
 }
 
 
-/* STWU: store reg to mem */
+/* STWU: store reg to memory */
 gboolean
 gum_ppc_writer_put_stwu_reg_reg_imm (GumPpcWriter * self,
                                    ppc_reg ptr_reg,
@@ -189,6 +242,28 @@ gum_ppc_writer_put_b_offset (GumPpcWriter * self,
       (((offset >> 2) & 0xffffff) << 2));
 }
 
+
+/* (FP) PUSH: push fpreg to stack (mnemonic, uses stfdu fprx, -4(r1))*/
+gboolean
+gum_ppc_writer_put_push_fpreg (GumPpcWriter * self,
+                               ppc_reg src_reg)
+{
+  return gum_ppc_writer_put_stfdu_reg_reg_imm (self, PPC_REG_R1, src_reg, -4);
+}
+
+/* (FP) STFDU: store fpreg to memory */
+gboolean
+gum_ppc_writer_put_stfdu_reg_reg_imm (GumPpcWriter * self,
+                                      ppc_reg ptr_reg,
+                                      ppc_reg src_reg,
+                                      gint16 imm)
+{
+  // STFDU frs, d(ra) -> (55) 
+  return gum_ppc_writer_put_dform_reg_reg_imm (self, 55, src_reg, ptr_reg, (guint16)imm);
+}
+
+
+
 /* D-Form instuctions */
 gboolean
 gum_ppc_writer_put_dform_reg_reg_imm (GumPpcWriter * self,
@@ -239,20 +314,4 @@ gum_ppc_writer_put_bytes (GumPpcWriter * self,
   return TRUE;
 }
 
-
-static void
-gum_ppc_writer_describe_reg (GumPpcWriter * self,
-                             ppc_reg reg,
-                             GumPpcRegInfo * ri)
-{
-  if (reg >= PPC_REG_R0 && reg <= PPC_REG_R31)
-  {
-    ri->width = GLIB_SIZEOF_VOID_P * 8;
-    ri->index = reg - PPC_REG_R0;
-  }
-  else
-  {
-    g_assert_not_reached ();
-  }
-}
 

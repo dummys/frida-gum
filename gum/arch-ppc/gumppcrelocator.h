@@ -25,7 +25,7 @@ struct _GumPpcRelocator
   const guint8 * input_cur;
   GumAddress input_pc;
   cs_insn ** input_insns;
-  GumPPCWriter * output;
+  GumPpcWriter * output;
 
   guint inpos;
   guint outpos;
@@ -35,16 +35,16 @@ struct _GumPpcRelocator
 };
 
 GUM_API GumPpcRelocator * gum_ppc_relocator_new (gconstpointer input_code,
-    GumPPCWriter * output);
+    GumPpcWriter * output);
 GUM_API GumPpcRelocator * gum_ppc_relocator_ref (GumPpcRelocator * relocator);
 GUM_API void gum_ppc_relocator_unref (GumPpcRelocator * relocator);
 
 GUM_API void gum_ppc_relocator_init (GumPpcRelocator * relocator,
-    gconstpointer input_code, GumPPCWriter * output);
+    gconstpointer input_code, GumPpcWriter * output);
 GUM_API void gum_ppc_relocator_clear (GumPpcRelocator * relocator);
 
 GUM_API void gum_ppc_relocator_reset (GumPpcRelocator * relocator,
-    gconstpointer input_code, GumPPCWriter * output);
+    gconstpointer input_code, GumPpcWriter * output);
 
 GUM_API guint gum_ppc_relocator_read_one (GumPpcRelocator * self,
     const cs_insn ** instruction);
