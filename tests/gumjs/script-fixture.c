@@ -133,6 +133,8 @@
 # define GUM_RETURN_VALUE_REGISTER_NAME "x0"
 #elif defined (HAVE_MIPS)
 # define GUM_RETURN_VALUE_REGISTER_NAME "v0"
+#elif defined (HAVE_PPC)
+# define GUM_RETURN_VALUE_REGISTER_NAME "r3"
 #else
 # error Unsupported architecture
 #endif
