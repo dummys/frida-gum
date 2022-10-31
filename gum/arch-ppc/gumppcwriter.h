@@ -69,34 +69,34 @@ GUM_API gboolean gum_ppc_writer_can_branch_directly_between (
     GumPpcWriter * self, GumAddress from, GumAddress to);
 */
 
-gboolean gum_ppc_writer_put_li32_reg_address (GumPpcWriter * self, 
+GUM_API gboolean gum_ppc_writer_put_li32_reg_address (GumPpcWriter * self, 
     ppc_reg reg, GumAddress address);
-gboolean gum_ppc_writer_put_lis_reg_imm (GumPpcWriter * self, ppc_reg reg, 
+GUM_API gboolean gum_ppc_writer_put_lis_reg_imm (GumPpcWriter * self, ppc_reg reg, 
     guint imm);
-gboolean gum_ppc_writer_put_addis_reg_reg_imm (GumPpcWriter * self, 
+GUM_API gboolean gum_ppc_writer_put_addis_reg_reg_imm (GumPpcWriter * self, 
     ppc_reg dst_reg, ppc_reg src_reg, gint16 imm);
-gboolean gum_ppc_writer_put_stwu_reg_reg_imm (GumPpcWriter * self, 
+GUM_API gboolean gum_ppc_writer_put_stwu_reg_reg_imm (GumPpcWriter * self, 
     ppc_reg ptr_reg,ppc_reg src_reg, gint16 imm);
-gboolean gum_ppc_writer_put_push_reg (GumPpcWriter * self, ppc_reg src_reg);
-gboolean gum_ppc_writer_put_ori_reg_reg_imm (GumPpcWriter * self, 
+GUM_API gboolean gum_ppc_writer_put_push_reg (GumPpcWriter * self, ppc_reg src_reg);
+GUM_API gboolean gum_ppc_writer_put_ori_reg_reg_imm (GumPpcWriter * self, 
     ppc_reg dst_reg, ppc_reg src_reg, guint16 imm);
-gboolean gum_ppc_writer_put_mtctr_reg (GumPpcWriter * self, ppc_reg src_reg);
-gboolean gum_ppc_writer_put_bctr_offset (GumPpcWriter * self);
-gboolean gum_ppc_writer_put_b_offset (GumPpcWriter * self, gint32 offset);
+GUM_API gboolean gum_ppc_writer_put_mtctr_reg (GumPpcWriter * self, ppc_reg src_reg);
+GUM_API gboolean gum_ppc_writer_put_bctr_offset (GumPpcWriter * self);
+GUM_API gboolean gum_ppc_writer_put_b_offset (GumPpcWriter * self, gint32 offset);
 
-gboolean gum_ppc_writer_put_push_fpreg (GumPpcWriter * self, ppc_reg src_reg);
-gboolean gum_ppc_writer_put_stfdu_reg_reg_imm (GumPpcWriter * self,
+GUM_API gboolean gum_ppc_writer_put_push_fpreg (GumPpcWriter * self, ppc_reg src_reg);
+GUM_API gboolean gum_ppc_writer_put_stfdu_reg_reg_imm (GumPpcWriter * self,
     ppc_reg ptr_reg, ppc_reg src_reg, gint16 imm);
 
 
-gboolean gum_ppc_writer_put_dform_reg_reg_imm (GumPpcWriter * self, 
+GUM_API gboolean gum_ppc_writer_put_dform_reg_reg_imm (GumPpcWriter * self, 
     guint8 opcode, ppc_reg rts_reg, ppc_reg ra_reg, guint16 imm);
 
-guint gum_ppc_writer_offset (GumPpcWriter * self);
+GUM_API guint gum_ppc_writer_offset (GumPpcWriter * self);
 
-gboolean gum_ppc_writer_put_nop (GumPpcWriter * self);
-gboolean gum_ppc_writer_put_instruction (GumPpcWriter * self, guint32 insn);
-gboolean gum_ppc_writer_put_bytes (GumPpcWriter * self, const guint8 * data,
+GUM_API gboolean gum_ppc_writer_put_nop (GumPpcWriter * self);
+GUM_API gboolean gum_ppc_writer_put_instruction (GumPpcWriter * self, guint32 insn);
+GUM_API gboolean gum_ppc_writer_put_bytes (GumPpcWriter * self, const guint8 * data,
     guint n);
 
 G_END_DECLS

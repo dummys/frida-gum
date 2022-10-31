@@ -338,6 +338,7 @@ gum_emit_enter_thunk (GumPpcWriter * cw)
   gum_emit_prolog (cw);
 
   /* TODO */
+  /*
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A1, MIPS_REG_SP,
       GUM_FRAME_OFFSET_CPU_CONTEXT);
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A2, MIPS_REG_SP,
@@ -348,10 +349,10 @@ gum_emit_enter_thunk (GumPpcWriter * cw)
   gum_mips_writer_put_call_address_with_arguments (cw,
       GUM_ADDRESS (_gum_function_context_begin_invocation), 4,
       GUM_ARG_REGISTER, PPC_REG_R0,
-      GUM_ARG_REGISTER, MIPS_REG_A1,  /* cpu_context */
-      GUM_ARG_REGISTER, MIPS_REG_A2,  /* return_address */
-      GUM_ARG_REGISTER, MIPS_REG_A3); /* next_hop */
-
+      GUM_ARG_REGISTER, MIPS_REG_A1,  // cpu_context
+      GUM_ARG_REGISTER, MIPS_REG_A2,  // return_address
+      GUM_ARG_REGISTER, MIPS_REG_A3); // next_hop
+  */
   gum_emit_epilog (cw);
 }
 
@@ -361,6 +362,7 @@ gum_emit_leave_thunk (GumPpcWriter * cw)
   gum_emit_prolog (cw);
 
   /* TODO */
+  /*
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A1, MIPS_REG_SP,
       GUM_FRAME_OFFSET_CPU_CONTEXT);
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_A2, MIPS_REG_SP,
@@ -369,9 +371,9 @@ gum_emit_leave_thunk (GumPpcWriter * cw)
   gum_mips_writer_put_call_address_with_arguments (cw,
       GUM_ADDRESS (_gum_function_context_end_invocation), 3,
       GUM_ARG_REGISTER, MIPS_REG_T0,
-      GUM_ARG_REGISTER, MIPS_REG_A1,  /* cpu_context */
-      GUM_ARG_REGISTER, MIPS_REG_A2); /* next_hop */
-
+      GUM_ARG_REGISTER, MIPS_REG_A1,  // cpu_context
+      GUM_ARG_REGISTER, MIPS_REG_A2); // next_hop
+  */
   gum_emit_epilog (cw);
 }
 
@@ -386,6 +388,7 @@ gum_emit_prolog (GumPpcWriter * cw)
    */
 
   /* TODO */
+  /*
   gum_mips_writer_put_push_reg (cw, MIPS_REG_ZERO);
 
   gum_mips_writer_put_push_reg (cw, MIPS_REG_K1);
@@ -428,7 +431,7 @@ gum_emit_prolog (GumPpcWriter * cw)
 
   gum_mips_writer_put_push_reg (cw, MIPS_REG_RA);
   gum_mips_writer_put_push_reg (cw, MIPS_REG_FP);
-
+  */
   /*
    * SP
    *
@@ -436,6 +439,7 @@ gum_emit_prolog (GumPpcWriter * cw)
    * the context above and saving it to the stack so that it can be read as part
    * of the CpuContext structure.
    */
+  /*
 #if GLIB_SIZEOF_VOID_P == 8
   gum_mips_writer_put_addi_reg_reg_imm (cw, MIPS_REG_V0, MIPS_REG_SP,
       8 + (30 * 8));
@@ -446,9 +450,11 @@ gum_emit_prolog (GumPpcWriter * cw)
   gum_mips_writer_put_push_reg (cw, MIPS_REG_V0);
 
   gum_mips_writer_put_push_reg (cw, MIPS_REG_GP);
-
+  */
   /* Dummy PC */
+  /*
   gum_mips_writer_put_push_reg (cw, MIPS_REG_ZERO);
+  */
 }
 
 static void
@@ -456,11 +462,13 @@ gum_emit_epilog (GumPpcWriter * cw)
 {
   /* TODO */
   /* Dummy PC */
+  /*
   gum_mips_writer_put_pop_reg (cw, MIPS_REG_V0);
 
   gum_mips_writer_put_pop_reg (cw, MIPS_REG_GP);
-
+  */
   /* Dummy SP */
+  /*
   gum_mips_writer_put_pop_reg (cw, MIPS_REG_V0);
 
   gum_mips_writer_put_pop_reg (cw, MIPS_REG_FP);
@@ -503,12 +511,14 @@ gum_emit_epilog (GumPpcWriter * cw)
 
   gum_mips_writer_put_pop_reg (cw, MIPS_REG_K0);
   gum_mips_writer_put_pop_reg (cw, MIPS_REG_K1);
-
+  */
   /*
    * Pop and jump to the next_hop.
    *
    * This needs to be via t9 so that PIC code works.
    */
+  /*
   gum_mips_writer_put_pop_reg (cw, MIPS_REG_T9);
   gum_mips_writer_put_jr_reg (cw, MIPS_REG_T9);
+  */
 }
