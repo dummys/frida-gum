@@ -2330,17 +2330,15 @@ writer_enums = {
 
     ],
     "ppc": [
-        ("ppc_register, ppc_reg", "PPC_REG_", [
-            "ctr", "lr", "xer",
+        ("ppc_register", "ppc_reg", "PPC_REG_", [
+            "ctr", "lr", "xer"
             "r0", "r1", "r2", "r3", "r4", "r5",
             "r6", "r7", "r8", "r9", "r10", "r11",
             "r12", "r13", "r14", "r15", "r16", "r17",
-            "r13", "r14", "r15", "r16", "r17", "r18",
-            "r19", "r20", "r21", "r22", "r23", "r24",
-            "r25", "r26", "r27", "r28", "r29", "r30",
-            "r31", "ctr", "lr", "fp", "cr0", "cr1",
-            "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",
-        
+            "r18", "r19", "r20", "r21", "r22", "r23",
+            "r24", "r25", "r26", "r27", "r28", "r29",
+            "r30", "r31","cr0",
+            "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",
         ]),
     ]
 }
@@ -2351,6 +2349,8 @@ def generate_conversion_methods(component, generate_parser):
 
     if component.name == "writer":
         for enum in writer_enums[component.flavor]:
+            #import pdb
+            #pdb.set_trace()
             d, c = generate_parser(*enum)
             decls += d
             code += c
