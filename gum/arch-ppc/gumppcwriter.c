@@ -21,7 +21,6 @@ struct _GumPpcLabelRef
 
 struct _GumPpcRegInfo
 {
-  /* GumPpcMetaReg meta; */
   guint width;
   guint index;
 };
@@ -73,6 +72,8 @@ gum_ppc_writer_flush (GumPpcWriter * self)
     return TRUE;
 }
 
+
+
 /* Load 32bit immediate shifted, pseudo instruction */
 void
 gum_ppc_writer_put_li32_reg_address (GumPpcWriter * self,
@@ -112,6 +113,21 @@ gum_ppc_writer_put_addis_reg_reg_imm (GumPpcWriter * self,
       (ra.index << 16) | (imm & 0xffff));
 }
 
+/* push reg to stack */
+void
+gum_ppc_writer_put_push_reg_stack (GumPpcWriter * self,
+                                      ppc_reg src_reg,
+                                      guint imm)
+{
+  GumPpcRegInfo rt, ra;
+
+  gum_ppc_writer_describe_reg (self, PPC_REG_R1, &rt);
+  gum_ppc_writer_describe_reg (self, src_reg, &ra);
+
+  
+  gum_ppc_writer_put_instruction (self, 0x25000000 | (ra.index << 21) |
+      (rt.index << 16) | (imm & 0xffff));
+}
 
 /* ORI: reg OR 16bit immediate */
 void
