@@ -347,7 +347,7 @@ gum_emit_enter_thunk (GumPpcWriter * cw)
 
   gum_mips_writer_put_call_address_with_arguments (cw,
       GUM_ADDRESS (_gum_function_context_begin_invocation), 4,
-      GUM_ARG_REGISTER, MIPS_REG_T0,
+      GUM_ARG_REGISTER, PPC_REG_R0,
       GUM_ARG_REGISTER, MIPS_REG_A1,  /* cpu_context */
       GUM_ARG_REGISTER, MIPS_REG_A2,  /* return_address */
       GUM_ARG_REGISTER, MIPS_REG_A3); /* next_hop */

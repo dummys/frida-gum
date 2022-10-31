@@ -7,10 +7,12 @@
 #ifndef __GUM_PPC_WRITER_H__
 #define __GUM_PPC_WRITER_H__
 
-#include <capstone.h>
 #include <gum/gumdefs.h>
 #include <gum/gummetalarray.h>
 #include <gum/gummetalhash.h>
+
+#include <capstone.h>
+
 
 #define GUM_PPC_B_MAX_DISTANCE 0x01fffffc
 
@@ -26,7 +28,6 @@ struct _GumPpcWriter
   guint32 * base;
   guint32 * code;
   GumAddress pc;
-
 
   GumMetalHashTable * label_defs;
   GumMetalArray label_refs;
@@ -47,10 +48,10 @@ GUM_API guint gum_ppc_writer_offset (GumPpcWriter * self);
 GUM_API void gum_ppc_writer_skip (GumPpcWriter * self, guint n_bytes);
 
 GUM_API gboolean gum_ppc_writer_flush (GumPpcWriter * self);
-GUM_API gboolean gum_ppc_writer_put_label (GumPpcWriter * self,
+GUM_API gboolean gum_ppc_writer_put_label (GumPpcWriter * self, 
     gconstpointer id);
 
-
+/*
 GUM_API void gum_ppc_writer_put_call_address_with_arguments (
     GumPpcWriter * self, GumAddress func, guint n_args, ...);
 GUM_API void gum_ppc_writer_put_call_address_with_arguments_array (
@@ -62,37 +63,39 @@ GUM_API void gum_ppc_writer_put_call_reg_with_arguments (GumPpcWriter * self,
 GUM_API void gum_ppc_writer_put_call_reg_with_arguments_array (
     GumPpcWriter * self, ppc_reg reg, guint n_args, const GumArgument * args);
 
-GUM_API void gum_ppc_writer_put_branch_address (GumPpcWriter * self,
-    GumAddress address);
-
 GUM_API gboolean gum_ppc_writer_can_branch_directly_between (
     GumPpcWriter * self, GumAddress from, GumAddress to);
-GUM_API gboolean gum_ppc_writer_put_b_imm (GumPpcWriter * self,
-    GumAddress target);
-GUM_API gboolean gum_ppc_writer_put_b_cond_imm (GumPpcWriter * self,
-    ppc_cc cc, GumAddress target);
-GUM_API void gum_ppc_writer_put_b_label (GumPpcWriter * self,
-    gconstpointer label_id);
-GUM_API void gum_ppc_writer_put_b_cond_label (GumPpcWriter * self,
-    ppc_cc cc, gconstpointer label_id);
+*/
+
+void gum_ppc_writer_put_li32_reg_address (GumPpcWriter * self, ppc_reg reg, 
+    GumAddress address);
+void gum_ppc_writer_put_lis_reg_imm (GumPpcWriter * self, ppc_reg reg, 
+    guint imm);
+void gum_ppc_writer_put_addis_reg_reg_imm (GumPpcWriter * self, 
+    ppc_reg dst_reg, ppc_reg src_reg, gint16 imm);
+void gum_ppc_writer_put_stwu_reg_reg_imm (GumPpcWriter * self, ppc_reg ptr_reg,
+    ppc_reg src_reg, gint16 imm);
+void gum_ppc_writer_put_push_reg (GumPpcWriter * self, ppc_reg src_reg);
+void gum_ppc_writer_put_ori_reg_reg_imm (GumPpcWriter * self, ppc_reg dst_reg,
+    ppc_reg src_reg, guint16 imm);
+void gum_ppc_writer_put_mtctr_reg (GumPpcWriter * self, ppc_reg src_reg);
+void gum_ppc_writer_put_bctr_offset (GumPpcWriter * self);
+void gum_ppc_writer_put_b_offset (GumPpcWriter * self, gint32 offset);
+void gum_ppc_writer_put_dform_reg_reg_imm (GumPpcWriter * self, guint8 opcode,
+    ppc_reg rts_reg, ppc_reg ra_reg, guint16 imm);
+static void gum_ppc_writer_describe_reg (GumPpcWriter * self,ppc_reg reg, 
+    GumPpcRegInfo * ri);
+
+guint gum_ppc_writer_offset (GumPpcWriter * self);
+
+void gum_mips_writer_put_nop (GumPpcWriter * self);
+
+void gum_ppc_writer_put_instruction (GumPpcWriter * self, guint32 insn);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+gboolean gum_ppc_writer_put_bytes (GumPpcWriter * self, const guint8 * data,
+    guint n);
 
 G_END_DECLS
+
+#endif
