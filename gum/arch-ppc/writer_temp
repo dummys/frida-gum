@@ -1,0 +1,54 @@
+static void
+gum_ppc_writer_describe_reg (GumPpcWriter * self,
+                             ppc_reg reg,
+                             GumPpcRegInfo * ri)
+{
+  if (reg >= PPC_REG_R0 && reg <= PPC_REG_R31)
+  {
+    ri->width = GLIB_SIZEOF_VOID_P * 8;
+    ri->index = reg - PPC_REG_R0;
+  }
+  elif (reg >= PPC_REG_F0 && reg <= PPC_REG_F31)
+  {
+    ri->width = 2 * (GLIB_SIZEOF_VOID_P * 8);
+    ri->index = reg - PPC_REG_F0;
+  }
+  else
+  {
+    g_assert_not_reached ();
+  }
+}
+
+
+void
+gum_ppc_writer_put_push_fpreg_stack (GumPpcWriter * self,
+                                      ppc_reg src_reg)
+{
+  GumPpcRegInfo rt, ra;
+
+  gum_ppc_writer_describe_reg (self, PPC_REG_R1, &rt);
+  gum_ppc_writer_describe_reg (self, src_reg, &ra);
+
+  gum_ppc_writer_put_push_fpdu_instruction (self,
+					PPC_REG_R1,
+					src_reg,
+					-4);
+}
+
+/* Push floating point register to R1 (stack) */
+
+void
+gum_ppc_writer_put_push_fpdu_instruction (GumPpcWriter * self,
+                                      ppc_reg src_reg,
+                                      ppc_reg dst_reg,
+                                      gint16 imm)
+{
+  GumPpcRegInfo rt, ra;
+
+  gum_ppc_writer_describe_reg (self, dst_reg, &rt);
+  gum_ppc_writer_describe_reg (self, src_reg, &ra);
+
+  
+  gum_ppc_writer_put_instruction (self, 0xdc000000 | (ra.index << 21) |
+      (rt.index << 16) | (imm & 0xffff));
+}
