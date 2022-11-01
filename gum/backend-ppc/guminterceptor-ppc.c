@@ -163,7 +163,7 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
   gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (self->enter_thunk->data));
   gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
   gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (ctx));
-  gum_ppc_writer_put_bctr (cw);
+  gum_ppc_writer_put_bctr_offset (cw);
 
   /* On_leave trampoline:
    * LI32 R0, leave_thunk     # Load leave_thunk address (LIS, ORI)
@@ -175,7 +175,7 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
   gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (self->leave_thunk->data));
   gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
   gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, GUM_ADDRESS (ctx));
-  gum_ppc_writer_put_bctr (cw);
+  gum_ppc_writer_put_bctr_offset (cw);
 
   gum_ppc_writer_flush (cw);
   g_assert (gum_ppc_writer_offset (cw) <= ctx->trampoline_slice->size);
@@ -209,7 +209,7 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
      */
     gum_ppc_writer_put_li32_reg_address (cw, data->scratch_reg, resume_at);
     gum_ppc_writer_put_mtctr_reg (cw, data->scratch_reg);
-    gum_ppc_writer_put_bctr (cw);
+    gum_ppc_writer_put_bctr_offset (cw);
 #else
     /* PUSH R0                  # Push temp register
      * LI32 R0, resume_at       # Load resume_at address (LIS, ORI)
@@ -222,7 +222,7 @@ _gum_interceptor_backend_create_trampoline (GumInterceptorBackend * self,
     gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, resume_at);
     gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
     /* POP */
-    gum_ppc_writer_put_bctr (cw);
+    gum_ppc_writer_put_bctr_offset (cw);
 #endif
   }
 
@@ -271,7 +271,7 @@ _gum_interceptor_backend_activate_trampoline (GumInterceptorBackend * self,
       /* Load imm32 into reg, copy reg to CTR, branch to CTR */
       gum_ppc_writer_put_li32_reg_address (cw, PPC_REG_R0, on_enter);
       gum_ppc_writer_put_mtctr_reg (cw, PPC_REG_R0);
-      gum_ppc_writer_put_bctr (cw);
+      gum_ppc_writer_put_bctr_offset (cw);
 #endif
       break;
     default:
