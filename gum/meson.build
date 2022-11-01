@@ -77,6 +77,8 @@ gum_sources = [
   'arch-arm64/gumarm64relocator.c',
   'arch-mips/gummipswriter.c',
   'arch-mips/gummipsrelocator.c',
+  'arch-ppc/gumppcwriter.c',
+  'arch-ppc/gumppcrelocator.c',
 ]
 
 gum_backend_headers = []
@@ -290,6 +292,22 @@ if host_arch in ['mips', 'mips64']
   ]
 endif
 
+gum_ppc_headers = [
+  'arch-ppc/gumppcwriter.h',
+  'arch-ppc/gumppcrelocator.h',
+]
+if host_arch in ['ppc']
+  gum_ppc_headers += [
+    'arch-ppc/gumppcbacktracer.h',
+  ]
+  gum_sources += [
+    'arch-ppc/gummipsbacktracer.c',
+    'backend-ppc/gumcpucontext-ppc.c',
+    'backend-ppc/guminterceptor-ppc.c',
+    'backend-ppc/gumspinlock-ppc.c',
+  ]
+endif
+
 if libunwind_dep.found()
   gum_backend_headers += [
     'backend-libunwind/gumunwbacktracer.h',
@@ -310,7 +328,7 @@ install_headers(gum_x86_headers, subdir: install_header_subdir + '/arch-x86')
 install_headers(gum_arm_headers, subdir: install_header_subdir + '/arch-arm')
 install_headers(gum_arm64_headers, subdir: install_header_subdir + '/arch-arm64')
 install_headers(gum_mips_headers, subdir: install_header_subdir + '/arch-mips')
-
+install_headers(gum_ppc_headers, subdir: install_header_subdir + '/arch-ppc')
 gum_enums = gnome.mkenums('gum-enum-types',
   sources: gum_headers,
   c_template: 'gumenumtypes.c.template',
