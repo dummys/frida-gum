@@ -301,7 +301,7 @@ if host_arch in ['ppc']
     'arch-ppc/gumppcbacktracer.h',
   ]
   gum_sources += [
-    'arch-ppc/gummipsbacktracer.c',
+    'arch-ppc/gumppcbacktracer.c',
     'backend-ppc/gumcpucontext-ppc.c',
     'backend-ppc/guminterceptor-ppc.c',
     'backend-ppc/gumspinlock-ppc.c',
