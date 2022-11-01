@@ -37,7 +37,7 @@ gum_cpu_context_get_nth_argument (GumCpuContext * self,
   }
   else
   {
-    gpointer * stack_argument = (gpointer *) (self->sp + 0xb4);
+    gpointer * stack_argument = (gpointer *) (self->r[1] + 0xb4);
 
     return stack_argument[n - 8];
   }
@@ -82,7 +82,7 @@ gum_cpu_context_replace_nth_argument (GumCpuContext * self,
   }
   else
   {
-    gpointer * stack_argument = (gpointer *) (self->sp + 0xb4);
+    gpointer * stack_argument = (gpointer *) (self->r[1] + 0xb4);
 
     stack_argument[n - 8] = value;
   }
