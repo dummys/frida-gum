@@ -84,6 +84,7 @@ gum_ppc_backtracer_generate (GumBacktracer * backtracer,
   const gsize * start_address, * end_address;
   guint start_index, skips_pending, depth, n, i;
   GumMemoryRange stack_ranges[2];
+  gsize page_size;
   const gsize * p;
 
   self = GUM_PPC_BACKTRACER (backtracer);
