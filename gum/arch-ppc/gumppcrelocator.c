@@ -13,6 +13,11 @@
 #include <string.h>
 
 #define GUM_MAX_INPUT_INSN_COUNT (100)
+#if GLIB_SIZEOF_VOID_P == 4
+# define GUM_DEFAULT_PPC_MODE CS_MODE_32
+#else
+# define GUM_DEFAULT_PPC_MODE CS_MODE_64
+#endif
 
 typedef struct _GumCodeGenCtx GumCodeGenCtx;
 
