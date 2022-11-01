@@ -26,7 +26,7 @@ struct _GumCodeGenCtx
   cs_insn * insn;
   GumAddress pc;
 
-  GumPpcWriter * code_writer;
+  GumPpcWriter * output;
 };
 
 static gboolean gum_ppc_relocator_write_one_instruction (
@@ -92,7 +92,7 @@ gum_ppc_relocator_can_relocate (gpointer address,
   while (reloc_bytes < min_bytes);
 
   /* TODO: search for available scratch register (see MIPS code) */
-  available_scratch_reg = PPC_REG_R0;
+  *available_scratch_reg = PPC_REG_R0;
 
   gum_ppc_relocator_clear (&rl);
 
@@ -263,7 +263,10 @@ gum_ppc_relocator_peek_next_write_insn (GumPpcRelocator * self)
 gboolean
 gum_ppc_relocator_write_one (GumPpcRelocator * self)
 {
+  const cs_insn * insn;
   cs_insn * cur;
+  gboolean rewritten;
+  GumCodeGenCtx ctx;
 
   if ((cur = gum_ppc_relocator_peek_next_write_insn (self)) == NULL)
     return FALSE;
