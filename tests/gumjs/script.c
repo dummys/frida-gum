@@ -846,7 +846,7 @@ TESTCASE (instruction_can_be_parsed)
   EXPECT_SEND_MESSAGE_WITH ("\"x0\"");
   EXPECT_SEND_MESSAGE_WITH ("\"w\"");
   EXPECT_SEND_MESSAGE_WITH ("\"imm\"");
-  EXPECT_SEND_MESSAGE_WITH ("\"w\"");
+  EXPECT_SEND_MESSAGE_WITH ("\"r\"");
   EXPECT_SEND_MESSAGE_WITH ("42");
 
   EXPECT_SEND_MESSAGE_WITH ("\"str\"");
@@ -6120,6 +6120,7 @@ static gboolean
 suspend_all_threads (const GumThreadDetails * details,
                      gpointer user_data)
 {
+#ifndef HAVE_WATCHOS
   GumScriptBackend * backend = user_data;
 
   if (details->id != gum_process_get_current_thread_id ())
@@ -6128,6 +6129,7 @@ suspend_all_threads (const GumThreadDetails * details,
         (GumScriptBackendLockedFunc) thread_suspend,
         GSIZE_TO_POINTER (details->id));
   }
+#endif
 
   return TRUE;
 }
@@ -6136,8 +6138,10 @@ static gboolean
 resume_all_threads (const GumThreadDetails * details,
                     gpointer user_data)
 {
+#ifndef HAVE_WATCHOS
   if (details->id != gum_process_get_current_thread_id ())
     thread_resume (details->id);
+#endif
 
   return TRUE;
 }
@@ -10375,12 +10379,13 @@ TESTCASE (debugger_can_be_enabled)
 
   server = gum_inspector_server_new ();
   g_signal_connect (server, "message", G_CALLBACK (on_incoming_debug_message),
-      fixture->backend);
+      fixture);
 
   script = gum_script_backend_create_sync (fixture->backend, "script",
       "const scriptTimer = setInterval(() => {\n"
       "  send('hello');\n"
       "}, 1000);", NULL, NULL, NULL);
+  fixture->script = script;
   gum_script_set_message_handler (script, on_script_message, "script", NULL);
   gum_script_set_debug_message_handler (script, on_outgoing_debug_message,
       server, NULL);
@@ -10406,7 +10411,6 @@ TESTCASE (debugger_can_be_enabled)
     g_error_free (error);
   }
 
-  g_object_unref (script);
   g_object_unref (server);
 }
 
@@ -10454,9 +10458,9 @@ on_incoming_debug_message (GumInspectorServer * server,
                            const gchar * message,
                            gpointer user_data)
 {
-  GumScript * script = user_data;
+  TestScriptFixture * fixture = user_data;
 
-  gum_script_post_debug_message (script, message);
+  gum_script_post_debug_message (fixture->script, message);
 }
 
 static void

@@ -73,7 +73,33 @@ if host_arch == 'arm'
   endif
 endif
 
-have_ptrauth_src = '''#ifdef __clang__
+if host_os_family == 'darwin'
+  apple_os_flavors = [
+    ['macOS',   'OSX'],
+    ['iOS',     'IOS'],
+    ['watchOS', 'WATCH'],
+    ['tvOS',    'TV'],
+  ]
+  foreach candidate : apple_os_flavors
+    name = candidate[0]
+    constant = candidate[1]
+    if cc.compiles('''
+                   #include <TargetConditionals.h>
+                   #if !TARGET_OS_@0@
+                   # error Nope
+                   #endif
+                   '''.format(constant),
+                   name: f'compiling for @name@')
+      host_os = name.to_lower()
+      break
+    endif
+  endforeach
+  if host_os == 'darwin'
+    error('Unable to detect Apple OS flavor')
+  endif
+
+  have_ptrauth_src = '''
+#ifdef __clang__
 # if __has_feature (ptrauth_calls)
 #  define HAVE_PTRAUTH 1
 # endif
@@ -83,34 +109,17 @@ have_ptrauth_src = '''#ifdef __clang__
 # error Pointer authentication not supported
 #endif
 '''
-have_ptrauth = cc.compiles(have_ptrauth_src, name: 'pointer authentication')
+  have_ptrauth = cc.compiles(have_ptrauth_src, name: 'pointer authentication')
 
-target_conditionals_prefix = '#include <TargetConditionals.h>'
-
-is_macos_src = target_conditionals_prefix + '''
-#if !TARGET_OS_OSX
-# error Not macOS
-#endif
-'''
-if cc.compiles(is_macos_src, name: 'compiling for macOS')
-  host_os = 'macos'
+  if host_arch == 'arm64' and have_ptrauth
+    host_abi = 'arm64e'
+  endif
+else
+  have_ptrauth = false
 endif
 
-is_ios_src = target_conditionals_prefix + '''
-#if !TARGET_OS_IOS
-# error Not iOS
-#endif
-'''
-if cc.compiles(is_ios_src, name: 'compiling for iOS')
-  host_os = 'ios'
-endif
-
-if cc.has_header('android/api-level.h')
+if host_os_family == 'linux' and cc.has_header('android/api-level.h')
   host_os = 'android'
-endif
-
-if host_arch == 'arm64' and have_ptrauth
-  host_abi = 'arm64e'
 endif
 
 if host_os_family == 'windows'
@@ -173,7 +182,8 @@ if allocator == 'system'
   cdata.set('GUM_USE_SYSTEM_ALLOC', 1)
 endif
 
-if get_option('jailbreak').allowed()
+have_jailbreak = get_option('jailbreak').allowed() and host_os in ['macos', 'ios']
+if have_jailbreak
   cdata.set('HAVE_JAILBREAK', 1)
 endif
 
@@ -224,12 +234,21 @@ if cc.compiles('#include <asm/prctl.h>', name: 'asm/prctl.h is available')
 endif
 
 functions = [
-  'madvise',
-  'posix_madvise',
+  ['madvise', []],
+  ['posix_madvise', []],
+  ['posix_spawnattr_init', ['spawn.h']]
 ]
 foreach f : functions
-  if cc.has_function(f)
-    cdata.set('HAVE_' + f.to_upper(), 1)
+  name = f[0]
+  headers_needed = f[1]
+
+  prefix_lines = []
+  foreach header : headers_needed
+    prefix_lines += [f'#include <@header@>']
+  endforeach
+
+  if cc.has_function(name, prefix: '\n'.join(prefix_lines))
+    cdata.set('HAVE_' + name.to_upper(), 1)
   endif
 endforeach
 
@@ -327,6 +346,7 @@ threads_dep = dependency('threads')
 glib_options = [
   'diet=' + diet.to_string(),
   'printf=' + allocator,
+  'cocoa=disabled',
   'selinux=disabled',
   'xattr=false',
   'libmount=disabled',
@@ -369,7 +389,10 @@ capstone_options = [
 capstone_dep = dependency('capstone', version: '>=5.0.0', default_options: capstone_options)
 
 if allocator == 'internal' or have_gumjs
-  ffi_dep = dependency('libffi')
+  ffi_options = [
+    'tests=false',
+  ]
+  ffi_dep = dependency('libffi', default_options: ffi_options)
 else
   ffi_dep = disabler()
 endif
@@ -554,14 +577,15 @@ if have_gumjs
     cdata.set('HAVE_JAVA_BRIDGE', 1)
   endif
 
-  libsoup_dep = dependency('libsoup-2.4', default_options: [
+  libsoup_dep = dependency('libsoup-3.0', default_options: [
     'gssapi=disabled',
     'ntlm=disabled',
     'brotli=disabled',
     'tls_check=false',
-    'gnome=false',
     'introspection=disabled',
     'vapi=disabled',
+    'docs=disabled',
+    'examples=disabled',
     'tests=false',
     'sysprof=disabled',
   ])
