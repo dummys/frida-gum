@@ -76,7 +76,7 @@ GUM_API gboolean gum_ppc_writer_put_lis_reg_imm (GumPpcWriter * self, ppc_reg re
 GUM_API gboolean gum_ppc_writer_put_addis_reg_reg_imm (GumPpcWriter * self, 
     ppc_reg dst_reg, ppc_reg src_reg, gint16 imm);
 GUM_API gboolean gum_ppc_writer_put_stwu_reg_reg_imm (GumPpcWriter * self, 
-    ppc_reg ptr_reg,ppc_reg src_reg, gint16 imm);
+    ppc_reg ptr_reg, ppc_reg src_reg, gint16 imm);
 GUM_API gboolean gum_ppc_writer_put_push_reg (GumPpcWriter * self, ppc_reg src_reg);
 GUM_API gboolean gum_ppc_writer_put_ori_reg_reg_imm (GumPpcWriter * self, 
     ppc_reg dst_reg, ppc_reg src_reg, guint16 imm);

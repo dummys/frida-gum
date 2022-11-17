@@ -9,7 +9,6 @@
 #include "gumlibc.h"
 #include "gummemory.h"
 
-// TODO
 #include <string.h>
 
 #define GUM_MAX_INPUT_INSN_COUNT (100)
@@ -23,18 +22,15 @@ typedef struct _GumCodeGenCtx GumCodeGenCtx;
 
 struct _GumCodeGenCtx
 {
-  cs_insn * insn;
+  const cs_insn * insn;
+  cs_ppc * detail;
   GumAddress pc;
 
   GumPpcWriter * output;
 };
 
-static gboolean gum_ppc_relocator_write_one_instruction (
-    GumPpcRelocator * self);
 static void gum_ppc_relocator_put_label_for (GumPpcRelocator * self,
     cs_insn * insn);
-static gboolean gum_ppc_relocator_rewrite_unconditional_branch (
-    GumPpcRelocator * self, GumCodeGenCtx * ctx);
 
 void
 gum_ppc_relocator_init (GumPpcRelocator * relocator,
@@ -53,6 +49,27 @@ gum_ppc_relocator_init (GumPpcRelocator * relocator,
   gum_ppc_relocator_reset (relocator, input_code, output);
 }
 
+void
+gum_ppc_relocator_clear (GumPpcRelocator * relocator)
+{
+  guint i;
+
+  gum_ppc_relocator_reset (relocator, NULL, NULL);
+
+  for (i = 0; i != GUM_MAX_INPUT_INSN_COUNT; i++)
+  {
+    cs_insn * insn = relocator->input_insns[i];
+    if (insn != NULL)
+    {
+      cs_free (insn, 1);
+      relocator->input_insns[i] = NULL;
+    }
+  }
+  g_free (relocator->input_insns);
+
+  cs_close (&relocator->capstone);
+}
+
 gboolean
 gum_ppc_relocator_eob (GumPpcRelocator * self)
 {
@@ -64,6 +81,14 @@ gum_ppc_relocator_eoi (GumPpcRelocator * self)
 {
   return self->eoi;
 }
+
+static void
+gum_ppc_relocator_put_label_for (GumPpcRelocator * self,
+                                 cs_insn * insn)
+{
+  gum_ppc_writer_put_label (self->output, GSIZE_TO_POINTER (insn->address));
+}
+
 gboolean
 gum_ppc_relocator_can_relocate (gpointer address,
                                 guint min_bytes,
@@ -260,18 +285,31 @@ gum_ppc_relocator_peek_next_write_insn (GumPpcRelocator * self)
   return self->input_insns[gum_ppc_relocator_outpos (self)];
 }
 
+void
+gum_ppc_relocator_write_all (GumPpcRelocator * self)
+{
+  guint count = 0;
+
+  while (gum_ppc_relocator_write_one (self))
+    count++;
+
+  g_assert (count > 0);
+}
+
 gboolean
 gum_ppc_relocator_write_one (GumPpcRelocator * self)
 {
-  const cs_insn * insn;
-  cs_insn * cur;
+  cs_insn * insn;
   gboolean rewritten;
   GumCodeGenCtx ctx;
 
-  if ((cur = gum_ppc_relocator_peek_next_write_insn (self)) == NULL)
+  if ((insn = gum_ppc_relocator_peek_next_write_insn (self)) == NULL)
     return FALSE;
 
-  gum_ppc_relocator_put_label_for (self, cur);
+  gum_ppc_relocator_increment_outpos (self);
+  ctx.insn = insn;
+  ctx.detail = &ctx.insn->detail->ppc;
+  ctx.output = self->output;
   
   switch (insn->id)
   {
@@ -282,4 +320,5 @@ gum_ppc_relocator_write_one (GumPpcRelocator * self)
 
   if (!rewritten)
     gum_ppc_writer_put_bytes (ctx.output, insn->bytes, insn->size);
+  return TRUE;
 }

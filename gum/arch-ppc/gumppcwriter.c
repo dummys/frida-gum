@@ -56,8 +56,6 @@ gum_ppc_writer_unref (GumPpcWriter * writer)
   }
 }
 
-
-
 void
 gum_ppc_writer_init (GumPpcWriter * writer,
                       gpointer code_address)
@@ -81,6 +79,34 @@ static gboolean
 gum_ppc_writer_has_label_refs (GumPpcWriter * self)
 {
   return self->label_refs.data != NULL;
+}
+
+void
+gum_ppc_writer_clear (GumPpcWriter * writer)
+{
+  if (writer->flush_on_destroy)
+    gum_ppc_writer_flush (writer);
+
+  if (gum_ppc_writer_has_label_defs (writer))
+    gum_metal_hash_table_unref (writer->label_defs);
+
+  if (gum_ppc_writer_has_label_refs (writer))
+    gum_metal_array_free (&writer->label_refs);
+}
+
+gboolean
+gum_ppc_writer_put_label (GumPpcWriter * self,
+                          gconstpointer id)
+{
+  if (!gum_ppc_writer_has_label_defs (self))
+    self->label_defs = gum_metal_hash_table_new (NULL, NULL);
+
+  if (gum_metal_hash_table_lookup (self->label_defs, id) != NULL)
+    return FALSE;
+
+  gum_metal_hash_table_insert (self->label_defs, (gpointer) id, self->code);
+
+  return TRUE;
 }
 
 void
@@ -288,6 +314,7 @@ gboolean
 gum_ppc_writer_put_nop (GumPpcWriter * self)
 {
   gum_ppc_writer_put_ori_reg_reg_imm (self, PPC_REG_R0, PPC_REG_R0, 0x0);
+  return TRUE;
 }
 
 gboolean
@@ -313,5 +340,3 @@ gum_ppc_writer_put_bytes (GumPpcWriter * self,
 
   return TRUE;
 }
-
-
