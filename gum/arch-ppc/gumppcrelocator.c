@@ -161,6 +161,12 @@ gum_ppc_relocator_can_relocate (gpointer address,
   return n >= min_bytes;
 }
 
+static guint
+gum_ppc_relocator_outpos (GumPpcRelocator * self)
+{
+  return self->outpos % GUM_MAX_INPUT_INSN_COUNT;
+}
+
 cs_insn *
 gum_ppc_relocator_peek_next_write_insn (GumPpcRelocator * self)
 {
@@ -230,12 +236,6 @@ static guint
 gum_ppc_relocator_inpos (GumPpcRelocator * self)
 {
   return self->inpos % GUM_MAX_INPUT_INSN_COUNT;
-}
-
-static guint
-gum_ppc_relocator_outpos (GumPpcRelocator * self)
-{
-  return self->outpos % GUM_MAX_INPUT_INSN_COUNT;
 }
 
 static void
@@ -346,15 +346,6 @@ gum_ppc_relocator_read_one (GumPpcRelocator * self,
   self->input_pc = address;
 
   return self->input_cur - self->input_start;
-}
-
-cs_insn *
-gum_ppc_relocator_peek_next_write_insn (GumPpcRelocator * self)
-{
-  if (self->outpos == self->inpos)
-    return NULL;
-
-  return self->input_insns[gum_ppc_relocator_outpos (self)];
 }
 
 void
