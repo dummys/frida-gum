@@ -64,6 +64,13 @@ gum_ppc_relocator_unref (GumPpcRelocator * relocator)
   }
 }
 
+static void
+gum_ppc_relocator_increment_outpos (GumPpcRelocator * self)
+{
+  self->outpos++;
+  g_assert (self->outpos <= self->inpos);
+}
+
 void
 gum_ppc_relocator_init (GumPpcRelocator * relocator,
                         gconstpointer input_code,
@@ -245,13 +252,6 @@ gum_ppc_relocator_increment_inpos (GumPpcRelocator * self)
   g_assert (self->inpos > self->outpos);
 }
 
-static void
-gum_ppc_relocator_increment_outpos (GumPpcRelocator * self)
-{
-  self->outpos++;
-  g_assert (self->outpos <= self->inpos);
-}
-
 guint
 gum_ppc_relocator_read_one (GumPpcRelocator * self,
                             const cs_insn ** instruction)
@@ -384,4 +384,10 @@ gum_ppc_relocator_write_one (GumPpcRelocator * self)
   if (!rewritten)
     gum_ppc_writer_put_bytes (ctx.output, insn->bytes, insn->size);
   return TRUE;
+}
+
+gboolean
+gum_ppc_relocator_write_one_no_label (GumPpcRelocator * self)
+{
+  return gum_ppc_relocator_write_one (self);
 }

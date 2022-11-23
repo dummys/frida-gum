@@ -137,6 +137,14 @@ gum_ppc_writer_offset (GumPpcWriter * self)
   return self->code - self->base;
 }
 
+void
+gum_ppc_writer_skip (GumPpcWriter * self,
+                     guint n_bytes)
+{
+  self->code = (guint32 *) (((guint8 *) self->code) + n_bytes);
+  self->pc += n_bytes;
+}
+
 gboolean
 gum_ppc_writer_flush (GumPpcWriter * self)
 {
