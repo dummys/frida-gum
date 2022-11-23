@@ -308,6 +308,7 @@ if host_arch in ['ppc']
     'backend-ppc/gumcpucontext-ppc.c',
     'backend-ppc/guminterceptor-ppc.c',
     'backend-ppc/gumspinlock-ppc.c',
+    'backend-ppc/gumstalker-ppc.c',
   ]
 endif
 

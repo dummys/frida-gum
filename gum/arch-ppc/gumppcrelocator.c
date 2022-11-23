@@ -32,6 +32,38 @@ struct _GumCodeGenCtx
 static void gum_ppc_relocator_put_label_for (GumPpcRelocator * self,
     cs_insn * insn);
 
+GumPpcRelocator *
+gum_ppc_relocator_new (gconstpointer input_code,
+                       GumPpcWriter * output)
+{
+  GumPpcRelocator * relocator;
+
+  relocator = g_slice_new (GumPpcRelocator);
+
+  gum_ppc_relocator_init (relocator, input_code, output);
+
+  return relocator;
+}
+
+GumPpcRelocator *
+gum_ppc_relocator_ref (GumPpcRelocator * relocator)
+{
+  g_atomic_int_inc (&relocator->ref_count);
+
+  return relocator;
+}
+
+void
+gum_ppc_relocator_unref (GumPpcRelocator * relocator)
+{
+  if (g_atomic_int_dec_and_test (&relocator->ref_count))
+  {
+    gum_ppc_relocator_clear (relocator);
+
+    g_slice_free (GumPpcRelocator, relocator);
+  }
+}
+
 void
 gum_ppc_relocator_init (GumPpcRelocator * relocator,
                         gconstpointer input_code,
@@ -129,6 +161,52 @@ gum_ppc_relocator_can_relocate (gpointer address,
   return n >= min_bytes;
 }
 
+static guint
+gum_ppc_relocator_outpos (GumPpcRelocator * self)
+{
+  return self->outpos % GUM_MAX_INPUT_INSN_COUNT;
+}
+
+cs_insn *
+gum_ppc_relocator_peek_next_write_insn (GumPpcRelocator * self)
+{
+  if (self->outpos == self->inpos)
+    return NULL;
+
+  return self->input_insns[gum_ppc_relocator_outpos (self)];
+}
+
+gpointer
+gum_ppc_relocator_peek_next_write_source (GumPpcRelocator * self)
+{
+  cs_insn * next;
+
+  next = gum_ppc_relocator_peek_next_write_insn (self);
+  if (next == NULL)
+    return NULL;
+
+  return GSIZE_TO_POINTER (next->address);
+}
+
+void
+gum_ppc_relocator_skip_one (GumPpcRelocator * self)
+{
+  cs_insn * next;
+
+  next = gum_ppc_relocator_peek_next_write_insn (self);
+  g_assert (next != NULL);
+  gum_ppc_relocator_increment_outpos (self);
+
+  gum_ppc_relocator_put_label_for (self, next);
+}
+
+void
+gum_ppc_relocator_skip_one_no_label (GumPpcRelocator * self)
+{
+  gum_ppc_relocator_peek_next_write_insn (self);
+  gum_ppc_relocator_increment_outpos (self);
+}
+
 void
 gum_ppc_relocator_reset (GumPpcRelocator * relocator,
                           gconstpointer input_code,
@@ -158,12 +236,6 @@ static guint
 gum_ppc_relocator_inpos (GumPpcRelocator * self)
 {
   return self->inpos % GUM_MAX_INPUT_INSN_COUNT;
-}
-
-static guint
-gum_ppc_relocator_outpos (GumPpcRelocator * self)
-{
-  return self->outpos % GUM_MAX_INPUT_INSN_COUNT;
 }
 
 static void
@@ -274,15 +346,6 @@ gum_ppc_relocator_read_one (GumPpcRelocator * self,
   self->input_pc = address;
 
   return self->input_cur - self->input_start;
-}
-
-cs_insn *
-gum_ppc_relocator_peek_next_write_insn (GumPpcRelocator * self)
-{
-  if (self->outpos == self->inpos)
-    return NULL;
-
-  return self->input_insns[gum_ppc_relocator_outpos (self)];
 }
 
 void
