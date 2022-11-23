@@ -15,7 +15,7 @@
 #include <capstone.h>
 
 
-#define GUM_PPC_B_MAX_DISTANCE 0x01fffffc
+#define GUM_PPC_B_MAX_DISTANCE 0x3fffffc
 
 G_BEGIN_DECLS
 
